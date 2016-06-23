@@ -199,11 +199,7 @@ void freeBitmap(bitmap* bmp) {
 }
 
 void drawBitmap(bitmap* bmp) {
-    
-    SDL_Rect srcrect, destrect;
-    
-    srcrect.x = bmp->left;
-    srcrect.y = bmp->top;
+        
     int width = bmp->right - bmp->left + 1;
     int height = bmp->bottom - bmp->top + 1; 
     

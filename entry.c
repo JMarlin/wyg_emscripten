@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include "../p5-redux/P5OSPPB/mods/include/key.h"
 #include "../p5-redux/P5OSPPB/mods/include/wyg.h"
 #include "../p5-redux/P5OSPPB/mods/include/p5.h"
 #include "../p5-redux/P5OSPPB/mods/include/gfx.h"
@@ -106,7 +107,7 @@ unsigned int window_a = 0, window_b = 0;
 
 int focusCmd() {
     
-    raiseHandle(window_a);
+    focus(window_a);
     return 0;
 }
 
@@ -146,16 +147,16 @@ int makeChild() {
     if(window_b) {
         
         cmd_prints("Raising window\n");
-        raiseHandle(window_b);
+        focus(window_b);
         return 0;
     }    
     
     cmd_prints("Creating window\n");
     
-    window_b = newWindow(400, 400, WIN_FIXEDSIZE, 0);
+    window_b = createWindow(400, 400, WIN_FIXEDSIZE);
     
     //Set up their titles
-    setWindowTitle(window_b, "Window B");
+    setTitle(window_b, "Window B");
     
     //Install them into the root window
     installWindow(window_b, ROOT_WINDOW);
@@ -172,7 +173,7 @@ int makeChild() {
     moveHandle(window_b, 100, 20);
     
     //Make them visible
-    markHandleVisible(window_b);
+    showWindow(window_b);
     
     return 0;
 }
@@ -182,9 +183,9 @@ int closeChild() {
     if(window_b) {
      
         cmd_prints("Destroying window\n");   
-        destroyHandle(window_b);
+        destroyWindow(window_b);
         window_b = 0;
-        return;
+        return 0;
     }
     
     cmd_prints("Window doesn't exist\n");
@@ -197,16 +198,14 @@ void makeWindows() {
     unsigned short w, h;
         
     //Make two windows
-    window* root_window = getWindowByHandle(ROOT_WINDOW);
-    w = root_window->w;
-    h = root_window->h;
+    getWindowDimensions(ROOT_WINDOW, &w, &h);
     
     printf("Creating window\n");
-    window_a = newWindow(w - 108, h - 132, WIN_FIXEDSIZE, 0);
+    window_a = createWindow(w - 108, h - 132, WIN_FIXEDSIZE);
     
     //Set up their titles
     printf("Setting up title\n");
-    setWindowTitle(window_a, "PTerm");
+    setTitle(window_a, "PTerm");
     
     //Install them into the root window
     printf("Placing window into desktop\n");
@@ -218,7 +217,7 @@ void makeWindows() {
     
     //Make them visible
     printf("Showing window\n");
-    markHandleVisible(window_a);
+    showWindow(window_a);
         
     //Set up the console commands
     printf("Setting up console\n");
@@ -253,7 +252,7 @@ int consVer(void) {
 
 int usrExit(void) {
 
-    destroyHandle(window_a);
+    destroyWindow(window_a);
     return 1;
 }
 
@@ -267,7 +266,7 @@ void repaintAll(unsigned int handle, bitmap* h_bmp) {
     h_bmp->right = h_bmp->width;   
     
     //Redraw 
-    drawHandle(handle);
+    repaintWindow(handle);
 }
 
 //Wrapper for setting the blit mask for the window bitmap to a specific region before requesting redraw
@@ -280,7 +279,7 @@ void repaintRegion(unsigned int handle, bitmap* h_bmp, unsigned int x, unsigned 
     h_bmp->right = x + w;   
     
     //Redraw 
-    drawHandle(handle); 
+    repaintWindow(handle); 
 }
 
 bitmap* cmd_bmp;
@@ -472,9 +471,7 @@ void cmd_init(unsigned int win) {
     cmd_bmp = getWindowContext(cmd_window);
     cmd_x = 0;
     cmd_y = 0;
-    tmpwnd = getWindowByHandle(cmd_window);
-    cmd_bx = tmpwnd->x;
-    cmd_by = tmpwnd->y;
+    getWindowDimensions(win, &cmd_bx, &cmd_by);
     cmd_width = cmd_bmp->width;
     cmd_height = cmd_bmp->height;
     cmd_max_chars = (cmd_width/8) - 1;

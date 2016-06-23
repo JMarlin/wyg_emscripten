@@ -1,6 +1,7 @@
 #ifdef HARNESS_TEST
-#include "../p5-redux/P5OSPPB/mods/include/p5.h"
 #include "../p5-redux/P5OSPPB/mods/include/gfx.h"
+#include "../p5-redux/P5OSPPB/mods/include/p5.h"
+#include "../p5-redux/P5OSPPB/mods/include/key.h"
 #include <stdlib.h>
 #include <memory.h>
 #include <stdio.h>
@@ -9,6 +10,7 @@
 #define REG_DEREGISTER 0
 #define SVC_WYG 0
 extern char* font_array;
+extern void testMain();
 #else 
 #include "../include/p5.h"
 #include "../include/registrar.h"
@@ -827,7 +829,7 @@ void updateOverlapped(Rect* window_bounds, window* avoid_window) {
 
 void markWindowVisible(window* dest_window, unsigned char is_visible);
 
-void moveWindow(window* dest_window, unsigned short new_x, unsigned short new_y) {
+void changeWindowPosition(window* dest_window, unsigned short new_x, unsigned short new_y) {
     
     Rect overlap_rect;
             
@@ -870,7 +872,7 @@ void moveHandle(unsigned int handle, unsigned short new_x, unsigned short new_y)
         return;
     }
        
-    moveWindow(dest_window, new_x, new_y);
+    changeWindowPosition(dest_window, new_x, new_y);
 }
 
 void installWindow(unsigned int child_handle, unsigned int parent_handle) {
@@ -1495,11 +1497,19 @@ void main(void) {
         terminate();
     }
 
+#ifdef HARNESS_TEST
+
+    num = 1;
+
+#else
+
     //Prompt user for a screen mode
     showModes();
     prints("mode: ");
     scans(10, inbuf);
     num = inbuf[0] > '9' ? inbuf[0] - 'A' + 10 : inbuf[0] - '0';
+
+#endif //HARNESS_TEST
 
     if(!setScreenMode(num)) {
 
