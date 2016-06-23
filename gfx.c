@@ -20,9 +20,11 @@ unsigned char initGfx() {
             screen.parentElement.removeChild(screen);
 
         screen = document.createElement('canvas');
-        screen.width = 800;
-        screen.height = 600;
+        screen.width = window.innerWidth;
+        screen.height = window.innerHeight;
+        screen.id = 'screen_canvas';
         window.screen_ctx = screen.getContext('2d');
+        document.body.style.margin = '0px';
         document.body.appendChild(screen);
     );
             
@@ -46,8 +48,8 @@ screen_mode* getModeDetails(unsigned short modenum) {
         return (screen_mode*)0;
 
     //Unpack the passed values
-    mode_details.width = 800;
-    mode_details.height = 600;
+    mode_details.width = EM_ASM_INT({return document.getElementById('screen_canvas').width;},0);
+    mode_details.height = EM_ASM_INT({return document.getElementById('screen_canvas').height;},0);
 
     //The bit of math in here is representative of the fact that we support 8-bit
     //16-bit, 24-bit or 32-bit color
@@ -68,7 +70,7 @@ void setColor(unsigned int color) {
 
     pen_color = color;
     
-    EM_ASM({
+    EM_ASM_({
         window.screen_ctx.strokeStyle = 'rgb(' + $0 + ',' + $1 + ',' + $2 + ',0)';
         window.screen_ctx.fillStyle = window.screen_ctx.strokeStyle;
     }, RVAL(color), GVAL(color), BVAL(color));
@@ -82,7 +84,7 @@ void setCursor(unsigned short x, unsigned short y) {
 
 void setPixel() {
 
-    EM_ASM({
+    EM_ASM_({
        var data = window.screen_ctx.getImageData(0, 0, 800, 600);
        var i = ($0 + $1 * 800) * 4;
        data.data[i + 0] = $2;
@@ -95,7 +97,7 @@ void setPixel() {
 
 void drawHLine(unsigned short length) {
 
-    EM_ASM({
+    EM_ASM_({
         window.screen_ctx.beginPath();
         window.screen_ctx.moveTo($0, $1);
         window.screen_ctx.lineTo($0 + $2 - 1, $1);
@@ -105,7 +107,7 @@ void drawHLine(unsigned short length) {
 
 void drawVLine(unsigned short length) {
 
-    EM_ASM({
+    EM_ASM_({
         window.screen_ctx.beginPath();
         window.screen_ctx.moveTo($0, $1);
         window.screen_ctx.lineTo($0, $1 + $2 - 1);
@@ -114,7 +116,7 @@ void drawVLine(unsigned short length) {
 
 void drawRect(unsigned short width, unsigned short height) {
 
-    EM_ASM({
+    EM_ASM_({
         window.screen_ctx.rect($0, $1, $2, $3);
         window.screen_ctx.stroke();
     }, pen_x, pen_y, width, height);
@@ -122,7 +124,7 @@ void drawRect(unsigned short width, unsigned short height) {
 
 void fillRect(unsigned short width, unsigned short height) {
 
-    EM_ASM({
+    EM_ASM_({
         window.screen_ctx.fillRect($0, $1, $2, $3);
     }, pen_x, pen_y, width, height);
 }
@@ -203,7 +205,7 @@ void drawBitmap(bitmap* bmp) {
     int width = bmp->right - bmp->left + 1;
     int height = bmp->bottom - bmp->top + 1; 
     
-    EM_ASM({
+    EM_ASM_({
         window.imgdata = new ImageData($0, $1);
     }, width, height);
 
@@ -215,7 +217,7 @@ void drawBitmap(bitmap* bmp) {
       
              color = bmp->data[(srcx + bmp->left) + ((srcy + bmp->top) * bmp->width)];
              
-             EM_ASM({
+             EM_ASM_({
                  var i = ($1 + ($2 * $0)) * 4;
                  window.imgdata.data[i + 0] = $3;
                  window.imgdata.data[i + 1] = $4;
@@ -225,9 +227,10 @@ void drawBitmap(bitmap* bmp) {
         }
     }
 
-    EM_ASM({
+    EM_ASM_({
+        console.log("drawing bitmap at (" + $0 + ", " + $1 + ")");
         window.screen_ctx.putImageData(window.imgdata, $0, $1);
-    }, pen_x, pen_y);
+    }, pen_x + bmp->left, pen_y + bmp->top);
 }
 
 void copyScreen(bitmap* bmp) {

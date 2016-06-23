@@ -70,7 +70,7 @@ unsigned short mouse_x;
 unsigned short mouse_y;
 unsigned char mouse_buffer_ok = 0;
 
-///*!!!!!!!!!! DEBUG SHIT !!!!!!!!!
+/*!!!!!!!!!! DEBUG SHIT !!!!!!!!!
 unsigned char cmd_x;
 int cmd_width;
 int cmd_max_chars;
@@ -165,7 +165,7 @@ void cmd_init(unsigned short xres, unsigned short yres) {
     cmd_max_chars = ((cmd_width - 2)/8) - 1;
     inited = 1;
 }
-//!!!!!!!!!! DEBUG SHIT !!!!!!!!!*/
+!!!!!!!!!! DEBUG SHIT !!!!!!!!!*/
 
 void drawWindow(window* cur_window, unsigned char use_current_blit);
 void raiseWindow(window* dest_window);
@@ -318,6 +318,7 @@ List* splitRect(Rect* rdest, Rect* rknife) {
 	baserect.bottom = rdest->bottom;
 	baserect.right = rdest->right;
 	
+/*
 	cons_prints("Splitting rect (");
 	cons_printDecimal(rdest->top);
 	cons_prints(", ");
@@ -335,6 +336,7 @@ List* splitRect(Rect* rdest, Rect* rknife) {
 	cons_prints(", ");
 	cons_printDecimal(rknife->right);
 	cons_prints(")\n");
+*/
 	
 #ifdef RECT_TEST    
     //printf("splitting (%u, %u, %u, %u)", baserect.top, baserect.left, baserect.bottom, baserect.right);
@@ -351,7 +353,7 @@ List* splitRect(Rect* rdest, Rect* rknife) {
 		return outrect;
 	}
 	
-    cons_prints("Doing left edge split\n");
+//    cons_prints("Doing left edge split\n");
 	//Split by left edge
 	if(rknife->left > baserect.left && rknife->left < baserect.right) {
 		
@@ -373,7 +375,7 @@ List* splitRect(Rect* rdest, Rect* rknife) {
 		baserect.left = rknife->left;
 	}
 
-    cons_prints("Doing top edge split\n");
+//    cons_prints("Doing top edge split\n");
 	//Split by top edge
 	if(rknife->top < baserect.bottom && rknife->top > baserect.top) {
 		
@@ -395,7 +397,7 @@ List* splitRect(Rect* rdest, Rect* rknife) {
 		baserect.top = rknife->top;
 	}
 
-    cons_prints("Doing right edge split\n");
+//    cons_prints("Doing right edge split\n");
 	//Split by right edge
 	if(rknife->right > baserect.left && rknife->right < baserect.right) {
 		
@@ -417,7 +419,7 @@ List* splitRect(Rect* rdest, Rect* rknife) {
 		baserect.right = rknife->right;
 	}
 
-    cons_prints("Doing bottom edge split\n");
+//    cons_prints("Doing bottom edge split\n");
 	//Split by bottom edge
 	if(rknife->bottom > baserect.top && rknife->bottom < baserect.bottom) {
 		
@@ -439,7 +441,7 @@ List* splitRect(Rect* rdest, Rect* rknife) {
 		baserect.bottom = rknife->bottom;
 	}
 
-    cons_prints("Result: \n");
+/*    cons_prints("Result: \n");
 	
 	List_for_each(outrect, new_rect, Rect*) {
 	
@@ -455,7 +457,7 @@ List* splitRect(Rect* rdest, Rect* rknife) {
 	}
 	
 	scans(10, inbuf);
-
+*/
 	return outrect;	
 }
 
@@ -606,12 +608,12 @@ void drawOccluded(window* win, Rect* baserect, List* splitrect_list) {
 			} 
 		}
 		
-		cons_prints("Moving on to next splitter\n");
+//		cons_prints("Moving on to next splitter\n");
 	}
 	
-	cons_prints("Drawing sub-rects of window #");
-    cons_printDecimal(win->handle);
-	cons_putc('\n');
+//	cons_prints("Drawing sub-rects of window #");
+//    cons_printDecimal(win->handle);
+//	cons_putc('\n');
     List_for_each(out_rects, out_rect, Rect*) {
 
 #ifdef RECT_TEST    
@@ -619,6 +621,7 @@ void drawOccluded(window* win, Rect* baserect, List* splitrect_list) {
 #endif //RECT_TEST
         
 		
+/*
 		cons_prints("    (");
 		cons_printDecimal(out_rect->top);
 		cons_prints(", ");
@@ -628,10 +631,11 @@ void drawOccluded(window* win, Rect* baserect, List* splitrect_list) {
 		cons_prints(", ");
 		cons_printDecimal(out_rect->right);
 		cons_prints(")\n");               
-        drawBmpRect(win, out_rect);     
+*/  
+      drawBmpRect(win, out_rect);     
     }
 	
-	scans(10, inbuf);
+//	scans(10, inbuf);
 	
 	List_delete(out_rects, Rect_deleter);
 }
@@ -700,8 +704,8 @@ window* newWindow(unsigned int width, unsigned int height, unsigned char flags, 
 	if(temp_window)
 		drawTitlebar(temp_window, 0);
 	
-    cmd_printDecimal(new_window->handle);
-     //pchar('\n');
+    //cmd_printDecimal(new_window->handle);
+    //pchar('\n');
     return new_window;
 }
 
@@ -1332,6 +1336,7 @@ void destroyHandle(unsigned int handle) {
 unsigned int cons_x, cons_y;
 unsigned int cons_max_c, cons_max_l;
 
+/*
 void cons_init() {
 	
 	cons_x = 0;
@@ -1416,10 +1421,11 @@ void cons_printHexDword(unsigned int dword) {
     cons_printHexWord((unsigned short)((dword & 0xFFFF0000)>>16));
     cons_printHexWord((unsigned short)(dword & 0xFFFF));
 }
-
+*/
 
 void window_printer(void* value) {
 	
+/*
 	window* win = (window*)value;
 	
 	cons_prints("    window ");
@@ -1427,16 +1433,19 @@ void window_printer(void* value) {
 	cons_prints(" @ 0x");
 	cons_printHexDword((unsigned int)win);
 	cons_putc('\n');
+*/
 }
 
 void exceptionHandler(void) {
-	
+
+/*	
 	cons_init();
 	cons_prints("Operating system raised an exception\n");
 	cons_prints("There were ");
 	cons_printDecimal(window_list->count);
 	cons_prints(" windows installed:\n");
 	List_print(window_list, window_printer);
+*/
 	while(1);
 }
 
@@ -1519,7 +1528,7 @@ void main(void) {
         terminate();
     }
 
-    installExceptionHandler((void*)exceptionHandler);
+//    installExceptionHandler((void*)exceptionHandler);
 
     if(num) {
 

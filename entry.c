@@ -1,3 +1,4 @@
+#include <emscripten.h>
 #include <stdio.h>
 #include <string.h>
 #include "../p5-redux/P5OSPPB/mods/include/key.h"
@@ -160,14 +161,16 @@ int makeChild() {
     
     //Install them into the root window
     installWindow(window_b, ROOT_WINDOW);
+
+//Gotta calculate frame dimensions here
     
     //Paint a pretty picture into window A
-    ctx_b = getWindowContext(window_b);
+//    ctx_b = getWindowContext(window_b);
     
     //This SHOULD tile the tile image across the window
-    for(x = 0; x < 400; x++)
-        for(y = 0; y < 400; y++)
-            ctx_b->data[y*(400) + x] = tile_data[(y%tile_height)*tile_width + (x%tile_width)];
+//    for(x = 0; x < 400; x++)
+//        for(y = 0; y < 400; y++)
+//            ctx_b->data[y*(400) + x] = tile_data[(y%tile_height)*tile_width + (x%tile_width)];
     
     //Make them prettily cascade
     moveHandle(window_b, 100, 20);
@@ -192,6 +195,8 @@ int closeChild() {
     
     return 0;
 }
+
+void input_loop();
 
 void makeWindows() {
     
@@ -222,7 +227,14 @@ void makeWindows() {
     //Set up the console commands
     printf("Setting up console\n");
     cmd_init(window_a);
+
+    initKey();
+    cmd_prints("::");
     
+    //Only for emscripten. Should be configurable via compiler directive
+    emscripten_set_main_loop(input_loop, 10, 1);
+
+/*
     while(1) {
 
         cmd_prints("::");
@@ -232,6 +244,43 @@ void makeWindows() {
         //If the command function returns 1 it signals that we need to exit
         if(parse(inbuf))
             break;
+    }
+*/
+}
+
+unsigned char temp_char = 0;
+int inbuf_ptr = 0;
+int finished = 0;
+
+void input_loop() {
+
+    //prints("::");
+    //cmd_scans(50, inbuf);
+
+    temp_char = getch();
+
+    if(!temp_char)
+        return;
+
+    cmd_pchar(temp_char);
+
+    if(temp_char == 0xA || temp_char == 0xD || inbuf_ptr == 49) {
+
+        inbuf[inbuf_ptr] = 0;
+
+        //If the command function returns 1 it signals that we need to exit
+        if(parse(inbuf))
+            finished = 1;
+
+        inbuf[0] = 0;
+        inbuf_ptr = 0;
+        cmd_prints("::");
+
+        if(finished)
+            emscripten_cancel_main_loop();
+    } else {
+
+        inbuf[inbuf_ptr++] = temp_char;
     }
 }
 
@@ -271,6 +320,11 @@ void repaintAll(unsigned int handle, bitmap* h_bmp) {
 
 //Wrapper for setting the blit mask for the window bitmap to a specific region before requesting redraw
 void repaintRegion(unsigned int handle, bitmap* h_bmp, unsigned int x, unsigned int y, unsigned int w, unsigned int h) {
+
+    //DEBUG
+    EM_ASM_({
+        console.log("redrawing at (" + $0 + ", " + $1 + ")");
+    }, x, y);
     
     //Set the blitting rect 
     h_bmp->top = y;
@@ -293,7 +347,7 @@ int cmd_max_chars;
 int cmd_max_lines;
 
 void drawCharacter(bitmap* b, char c, int x, int y, unsigned int color) {
-    
+   
     int j, i;
     unsigned char line;
     c &= 0x7F; //Reduce to base ASCII set

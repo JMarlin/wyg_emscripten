@@ -1,5 +1,5 @@
 //This is the test harness version of the P5 lib
-
+#include <emscripten.h>
 #include "../p5-redux/P5OSPPB/mods/include/p5.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -64,10 +64,33 @@ void terminate(void) {
 
 }
 
+int initKey() {
+
+    //Setup a function that places key codes into a buffer
+    //every time the key event fires on our canvas object
+    EM_ASM(
+        if(window.keyq === undefined)
+            window.keyq = []; 
+
+        document.addEventListener('keydown', function(event) {
+            
+            window.keyq.push(event.keyCode);
+        });
+    );
+
+    return 1;
+}
 
 unsigned char getch() {
 
-    return getchar();
+    //Get the most recent character from the queue or zero
+    //if there are none
+    return (unsigned char)EM_ASM_INT({
+        if(window.keyq !== undefined && window.keyq.length > 0)
+            return window.keyq.shift();
+        else
+            return 0;
+    }, 0);
 }
 
 
@@ -165,11 +188,13 @@ void* getSharedPage(void) {
     return malloc(4096);
 }
 
+/*
 unsigned int sleep(unsigned int ms) {
 
     //Maybe I'll figure this out later
     return 1;
 }
+*/
 
 unsigned int getImageSize(unsigned int pid) {
 

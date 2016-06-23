@@ -17,7 +17,7 @@ List* List_new(void) {
 
 //Deletes all elements of the list, and deletes the contained values
 //using the passed delete function
-extern void cmd_prints(char* s);
+//extern void cmd_prints(char* s);
 void List_delete(List* list, deleter del_func) {
 	
 	ListItem* current_item = list->root_item;
