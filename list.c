@@ -1,4 +1,6 @@
+#include <emscripten.h>
 #include <stdlib.h>
+#include "rect.h" //DEBUG
 #include "list.h"
 
 List* List_new(void) {
@@ -22,7 +24,7 @@ void List_delete(List* list, deleter del_func) {
 	
 	ListItem* current_item = list->root_item;
 	ListItem* prev_item;
-	
+
 	//cmd_prints("Checking to see if root item exists");
 	if(current_item) {
 		
@@ -38,10 +40,10 @@ void List_delete(List* list, deleter del_func) {
 		    //cmd_prints("Getting previous item");
 		    //Temporarily store the previous element so that we don't lose it
 		    prev_item = current_item->prev;
-			
+
 			//cmd_prints("Deleting current item");
 			//Use the supplied deleter to delete the lite item's value 
-			del_func(current_item->value);
+			del_func(current_item->value, list->count);
 			
 			//cmd_prints("Freeing list item container");
 			//Finally, get rid of the current ListItem and move back down the list
@@ -49,6 +51,8 @@ void List_delete(List* list, deleter del_func) {
 			
 			//cmd_prints("Rewinding by one");
 			current_item = prev_item;    	
+
+                        list->count--;
 		}
 	}
 	
@@ -105,7 +109,7 @@ void List_remove(List* list, void* value, deleter del_func) {
     void* popval = List_pop(list, value);
 	
 	if(popval)
-    	del_func(value);        
+    	del_func(value, list->count);        
 }
 
 void List_rewind(List* list) {
@@ -140,7 +144,11 @@ int List_add(List* list, void* value) {
         current_item->next = new_item; 
     }
     
-	list->count++;
+Rect* rect = (Rect*)value;			
+EM_ASM_({console.log("Added rect " + $0  + " to a list");}, rect->id);
+    
+
+    list->count++;
 	
     return 1;
 }

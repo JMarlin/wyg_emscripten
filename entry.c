@@ -321,11 +321,6 @@ void repaintAll(unsigned int handle, bitmap* h_bmp) {
 //Wrapper for setting the blit mask for the window bitmap to a specific region before requesting redraw
 void repaintRegion(unsigned int handle, bitmap* h_bmp, unsigned int x, unsigned int y, unsigned int w, unsigned int h) {
 
-    //DEBUG
-    EM_ASM_({
-        console.log("redrawing at (" + $0 + ", " + $1 + ")");
-    }, x, y);
-    
     //Set the blitting rect 
     h_bmp->top = y;
     h_bmp->left = x;
@@ -340,6 +335,7 @@ bitmap* cmd_bmp;
 unsigned int cmd_window;
 unsigned char cmd_x;
 unsigned char cmd_y;
+int off_top, off_left;
 unsigned short cmd_bx, cmd_by; 
 int cmd_width;
 int cmd_height;
@@ -404,7 +400,7 @@ void cmd_pchar(unsigned char c) {
     } else {
         
         putchar(c);
-        drawCharacter(cmd_bmp, c, (cmd_x*8), (cmd_y*12), RGB(0, 0, 0));
+        drawCharacter(cmd_bmp, c, (cmd_x*8) + off_left, (cmd_y*12) + off_top, RGB(0, 0, 0));
         cmd_x++;
 
         if(cmd_x > cmd_max_chars) {
@@ -432,7 +428,7 @@ void cmd_clear() {
 
     for(y = 0; y < cmd_height; y++)
         for(x = 0; x < cmd_width; x++)
-            cmd_bmp->data[y*cmd_bmp->width + x] = RGB(255, 255, 255);
+            cmd_bmp->data[(y+off_top)*cmd_bmp->width + (x+off_left)] = RGB(255, 255, 255);
             
     cmd_x = 0;
     cmd_y = 0;
@@ -520,14 +516,17 @@ void cmd_scans(int c, char* b) {
 void cmd_init(unsigned int win) {
 
     window* tmpwnd;
+    unsigned char bottom, right;
+
+    getFrameDims(&off_top, &off_left, &bottom, &right);
     
     cmd_window = win;
     cmd_bmp = getWindowContext(cmd_window);
     cmd_x = 0;
     cmd_y = 0;
-    getWindowDimensions(win, &cmd_bx, &cmd_by);
-    cmd_width = cmd_bmp->width;
-    cmd_height = cmd_bmp->height;
+    //getWindowDimensions(win, &cmd_bx, &cmd_by);
+    cmd_width = cmd_bmp->width - (off_left + right);
+    cmd_height = cmd_bmp->height - (off_top + bottom);
     cmd_max_chars = (cmd_width/8) - 1;
     cmd_max_lines = (cmd_height/12) - 1;
     cmd_clear();

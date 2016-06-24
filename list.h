@@ -17,7 +17,7 @@ typedef struct List {
 	unsigned int count;
 } List; 
 
-typedef void (*deleter)(void* value);
+typedef void (*deleter)(void* value, int count);
 typedef void (*printer)(void* value);
 
 List* List_new(void);

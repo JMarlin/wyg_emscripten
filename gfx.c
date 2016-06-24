@@ -26,6 +26,7 @@ unsigned char initGfx() {
         window.screen_ctx = screen.getContext('2d');
         document.body.style.margin = '0px';
         document.body.appendChild(screen);
+        screen.style.cursor = 'none';
     );
             
     return 1;
@@ -228,7 +229,7 @@ void drawBitmap(bitmap* bmp) {
     }
 
     EM_ASM_({
-        console.log("drawing bitmap at (" + $0 + ", " + $1 + ")");
+        //console.log("drawing bitmap at (" + $0 + ", " + $1 + ")");
         window.screen_ctx.putImageData(window.imgdata, $0, $1);
     }, pen_x + bmp->left, pen_y + bmp->top);
 }
