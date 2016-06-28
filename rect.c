@@ -3,11 +3,11 @@
 #include "rect.h"
 
 //Used to delete the elements of a list when those elements are 
-void Rect_deleter(void* item, int count) {
+void Rect_deleter(void* item) {
 	
         Rect* rect = (Rect*)item;
 
-        EM_ASM_({console.log('Deleting rectangle ' + $0 + ' ( ' + $1  + ' left)');}, rect->id, count);
+        EM_ASM_({console.log('Deleting rectangle ' + $0);}, rect->id);
 	free(item);
 }
 

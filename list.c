@@ -26,7 +26,7 @@ void List_delete(List* list, deleter del_func) {
 	ListItem* prev_item;
 
 	//cmd_prints("Checking to see if root item exists");
-	if(current_item) {
+	if(current_item && list->count) {
 		
 		//Fast forward to the end of the list
 		//cmd_prints("Going to end of list");
@@ -43,7 +43,7 @@ void List_delete(List* list, deleter del_func) {
 
 			//cmd_prints("Deleting current item");
 			//Use the supplied deleter to delete the lite item's value 
-			del_func(current_item->value, list->count);
+			del_func(current_item->value);
 			
 			//cmd_prints("Freeing list item container");
 			//Finally, get rid of the current ListItem and move back down the list
@@ -109,7 +109,7 @@ void List_remove(List* list, void* value, deleter del_func) {
     void* popval = List_pop(list, value);
 	
 	if(popval)
-    	del_func(value, list->count);        
+    	    del_func(value);        
 }
 
 void List_rewind(List* list) {

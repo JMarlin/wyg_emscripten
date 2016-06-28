@@ -10,6 +10,6 @@ typedef struct Rect {
 } Rect;
 
 Rect* Rect_new(unsigned int top, unsigned int left, unsigned int bottom, unsigned int right);
-void Rect_deleter(void* value, int count);
+void Rect_deleter(void* value);
 
 #endif //RECT_H

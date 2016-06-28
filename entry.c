@@ -438,7 +438,7 @@ void cmd_clear() {
     //Now clear to green temporarily to see what's getting repainted and where
     for(y = 0; y < cmd_height; y++)
         for(x = 0; x < cmd_width; x++)
-            cmd_bmp->data[y*cmd_bmp->width + x] = RGB(0, 255, 0);
+            cmd_bmp->data[(y+off_top)*cmd_bmp->width + (x+off_left)] = RGB(0, 255, 0);
 }
 
 void cmd_printDecimal(unsigned int dword) {

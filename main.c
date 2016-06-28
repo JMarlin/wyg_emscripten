@@ -1294,10 +1294,12 @@ void window_deleter(void* item) {
 	
 	//Free the context
     freeBitmap((void*)win->context);
-    
+
+#ifndef HARNESS_TEST    
     //Free the title (if we ever decide to error on unsuccessful frees, this could be an issue for static or undefined titles)
     if(win->title)
-		free((void*)win->title);
+	free((void*)win->title);
+#endif //HARNESS_TEST
     
     //And finally free ourself 
     free((void*)win);
