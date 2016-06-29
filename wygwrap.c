@@ -15,6 +15,7 @@ typedef struct window {
     unsigned char frame_needs_redraw;
 } window;
 
+extern void moveMouse(short x_off, short y_off);
 extern window* getWindowByHandle(unsigned int handle);
 extern void moveHandle(unsigned int handle, unsigned short new_x, unsigned short new_y);
 extern void markHandleVisible(unsigned int handle, unsigned char is_visible);
@@ -32,6 +33,11 @@ unsigned int createWindow(unsigned short width, unsigned short height, unsigned 
 unsigned int initWYG(void) {
 
     return 1;
+}
+
+void updateMouse(short x_off, short y_off) {
+
+    moveMouse(x_off, y_off);
 }
 
 void getWindowDimensions(unsigned int handle, unsigned short *w, unsigned short *h) {
@@ -83,5 +89,5 @@ void getFrameDims(unsigned char* top, unsigned char* left, unsigned char* bottom
     *top = 28;
     *left = 4;
     *bottom = 4;
-    *bottom = 4;
+    *right = 4;
 }

@@ -11,6 +11,9 @@
 //This way we get access to the entry point of WYG
 extern void WYG_main(void);
 extern unsigned char font_array[];
+extern int initMouse(void);
+extern int checkMouse(int* x, int* y);
+extern void putMouse(int x, int y);
 
 typedef struct window {
     unsigned char flags;
@@ -29,6 +32,8 @@ typedef struct window {
     unsigned char frame_needs_redraw;
 } window;
 
+int off_top, off_left, off_bottom, off_right;
+
 int main(int argc, char** argv) {
 	
 	WYG_main();
@@ -36,7 +41,7 @@ int main(int argc, char** argv) {
 	return 0;
 }
 
-#define CMD_COUNT 7
+#define CMD_COUNT 8
 
 //Function declarations
 int usrClear(void);
@@ -46,6 +51,7 @@ int makeChild(void);
 int closeChild(void);
 int focusCmd(void);
 int moveChild(void);
+int moveMe(void);
 void cmd_pchar(unsigned char c);
 void cmd_prints(unsigned char* s);
 void cmd_clear();
@@ -69,7 +75,8 @@ char* cmdWord[CMD_COUNT] = {
     "WIN",
     "CLOSE",
     "FOCUS",
-    "MOV"
+    "MOV",
+    "MOVME"
 };
 
 sys_command cmdFunc[CMD_COUNT] = {
@@ -79,7 +86,8 @@ sys_command cmdFunc[CMD_COUNT] = {
     (sys_command)&makeChild,
     (sys_command)&closeChild,
     (sys_command)&focusCmd,
-    (sys_command)&moveChild
+    (sys_command)&moveChild,
+    (sys_command)&moveMe
 };
 
 char inbuf[50];
@@ -129,6 +137,18 @@ int moveChild() {
     return 0;
 }
 
+int moveMe() {
+
+    static int moved = 0;
+
+    if(!moved)
+        moveHandle(window_a, 0, 0);
+    else
+        moveHandle(window_a, 54, 66);
+
+    moved = !moved;
+}
+
 int makeChild() {
     
     bitmap* ctx_b;
@@ -165,12 +185,12 @@ int makeChild() {
 //Gotta calculate frame dimensions here
     
     //Paint a pretty picture into window A
-//    ctx_b = getWindowContext(window_b);
+    ctx_b = getWindowContext(window_b);
     
     //This SHOULD tile the tile image across the window
-//    for(x = 0; x < 400; x++)
-//        for(y = 0; y < 400; y++)
-//            ctx_b->data[y*(400) + x] = tile_data[(y%tile_height)*tile_width + (x%tile_width)];
+    for(x = 0; x < 400 - off_left - off_right; x++)
+        for(y = 0; y < 400 - off_top - off_bottom; y++)
+            ctx_b->data[(y+off_top)*(400) + (x+off_left)] = tile_data[(y%tile_height)*tile_width + (x%tile_width)];
     
     //Make them prettily cascade
     moveHandle(window_b, 100, 20);
@@ -201,6 +221,8 @@ void input_loop();
 void makeWindows() {
     
     unsigned short w, h;
+
+    getFrameDims(&off_top, &off_left, &off_bottom, &off_right);
         
     //Make two windows
     getWindowDimensions(ROOT_WINDOW, &w, &h);
@@ -229,10 +251,11 @@ void makeWindows() {
     cmd_init(window_a);
 
     initKey();
+    initMouse();
     cmd_prints("::");
     
     //Only for emscripten. Should be configurable via compiler directive
-    emscripten_set_main_loop(input_loop, 10, 1);
+    emscripten_set_main_loop(input_loop, 0, 1);
 
 /*
     while(1) {
@@ -254,8 +277,16 @@ int finished = 0;
 
 void input_loop() {
 
+    int mouse_x, mouse_y;
+  
     //prints("::");
     //cmd_scans(50, inbuf);
+
+    //Check the mouse
+    if(checkMouse(&mouse_x, &mouse_y)) {
+       
+        putMouse(mouse_x, mouse_y);
+    }
 
     temp_char = getch();
 
@@ -335,7 +366,6 @@ bitmap* cmd_bmp;
 unsigned int cmd_window;
 unsigned char cmd_x;
 unsigned char cmd_y;
-int off_top, off_left;
 unsigned short cmd_bx, cmd_by; 
 int cmd_width;
 int cmd_height;
@@ -514,19 +544,14 @@ void cmd_scans(int c, char* b) {
 
 
 void cmd_init(unsigned int win) {
-
-    window* tmpwnd;
-    unsigned char bottom, right;
-
-    getFrameDims(&off_top, &off_left, &bottom, &right);
     
     cmd_window = win;
     cmd_bmp = getWindowContext(cmd_window);
     cmd_x = 0;
     cmd_y = 0;
     //getWindowDimensions(win, &cmd_bx, &cmd_by);
-    cmd_width = cmd_bmp->width - (off_left + right);
-    cmd_height = cmd_bmp->height - (off_top + bottom);
+    cmd_width = cmd_bmp->width - (off_left + off_right);
+    cmd_height = cmd_bmp->height - (off_top + off_bottom);
     cmd_max_chars = (cmd_width/8) - 1;
     cmd_max_lines = (cmd_height/12) - 1;
     cmd_clear();

@@ -1,6 +1,4 @@
-#include <emscripten.h>
 #include <stdlib.h>
-#include "rect.h" //DEBUG
 #include "list.h"
 
 List* List_new(void) {
@@ -144,10 +142,6 @@ int List_add(List* list, void* value) {
         current_item->next = new_item; 
     }
     
-Rect* rect = (Rect*)value;			
-EM_ASM_({console.log("Added rect " + $0  + " to a list");}, rect->id);
-    
-
     list->count++;
 	
     return 1;

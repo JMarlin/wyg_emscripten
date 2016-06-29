@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <stdio.h>
+#include <emscripten.h>
 #include "../p5-redux/P5OSPPB/mods/include/wyg.h"
 #define REGISTRAR_PID 0
 #define REG_DEREGISTER 0
@@ -43,6 +44,8 @@ Linkage is in order of increasing z-value
 
 #define new(x) (((x)*)malloc(sizeof(x)))
 
+void window_printer(void* value);
+
 message temp_msg;
 
 unsigned char inbuf[12];
@@ -62,7 +65,7 @@ typedef struct window {
     unsigned char frame_needs_redraw;
 } window;
 
-window* root_window;
+window *root_window, *mouse_window;
 List* window_list;
 unsigned char inited = 0;
 bitmap* old_mouse_bkg;
@@ -786,10 +789,12 @@ void updateOverlapped(Rect* window_bounds, window* avoid_window) {
 	
     //prints("[WYG] Looking for previously overlapped windows\n");
         
-    List_for_each(window_list, cur_window, window*) {
+    for(i = 0; i < window_list->count; i++) {
+
+        cur_window = (window*)List_get_at(window_list, i);
         
-		if(cur_window == avoid_window)
-		    continue;
+	if(!cur_window || cur_window == avoid_window)
+	    continue;
 		
         comp_rect.top = cur_window->y;
         comp_rect.left = cur_window->x;
@@ -1241,44 +1246,57 @@ void raiseWindow(window* dest_window) {
     
     window* old_active;
             
-    //Can't raise the root window
-    if(dest_window->handle == 1)
+    //Can't raise the root window, mouse window, a null window pointer or if there's nothing but the root and
+    //mouse in the window list
+    if(dest_window == root_window || dest_window == mouse_window || !dest_window || window_list->count == 2)
         return;
         
     //Get the previously active window 
-	old_active = (window*)List_get_at(window_list, window_list->count - 1);
+    old_active = (window*)List_get_at(window_list, window_list->count - 2);
     
-	//If we were already active we don't need to do anything else 
-	if(old_active == dest_window)
-	    return;
-	
-	//extract the current window from its position in the list and
-	//re-insert it at the end 
-    if(!List_pop(window_list, (void*)old_active))
-	    return;
-    
-	if(!List_add(window_list, (void*)old_active))
-	    return;
+    //If we were already active we don't need to do anything else 
+    if(old_active == dest_window)
+        return;
+
+    //extract the current window from its position in the list and
+    //re-insert it at the end, making sure to pop and restore the
+    //mouse window as well to keep it always on top
+    if(!List_pop(window_list, (void*)mouse_window))
+        return;
+
+    if(!List_pop(window_list, (void*)dest_window))
+        return;
+
+    if(!List_add(window_list, (void*)dest_window))
+        return;
+
+    if(!List_add(window_list, (void*)mouse_window))
+        return;
 		
-	//Update the titlebar on the old and new active windows 
-	old_active->active = 0;
-	dest_window->active = 1;
-	drawTitlebar(old_active, 1);
+    //Update the titlebar on the old and new active windows 
+    old_active->active = 0;
+    dest_window->active = 1;
+    drawTitlebar(old_active, 1);
+    drawTitlebar(dest_window, 0);
 	
-	//If the window isn't visible, it will need to be in order to be
-	//raised, otherwise we just redraw (would be more efficient in
-	//the future to just redraw those portions that were occluded
-	//prior to raising)
+    //If the window isn't visible, it will need to be in order to be
+    //raised, otherwise we just redraw (would be more efficient in
+    //the future to just redraw those portions that were occluded
+    //prior to raising)
     if(!(dest_window->flags &= WIN_VISIBLE))
-	    markWindowVisible(dest_window, 1);
-	else
-	    drawWindow(dest_window, 0);
+        markWindowVisible(dest_window, 1);
+    else
+        drawWindow(dest_window, 0);
 }
 
 void raiseHandle(unsigned int handle) {
+
+    //Can't raise the root or mouse windows
+    if(handle == 1 || handle == 2)
+        return;
     
     window* dest_window = getWindowByHandle(handle);
-    
+
     if(!dest_window) {
      
          //prints("[WYG] Couldn't find the window to be raised\n");   
@@ -1427,15 +1445,17 @@ void cons_printHexDword(unsigned int dword) {
 
 void window_printer(void* value) {
 	
-/*
+
 	window* win = (window*)value;
-	
-	cons_prints("    window ");
-	cons_printDecimal(win->handle);
-	cons_prints(" @ 0x");
-	cons_printHexDword((unsigned int)win);
-	cons_putc('\n');
-*/
+
+EM_ASM_({	
+	console.log("    window " +
+	            $0            +
+	            " @ 0x"       +
+	            $1
+        );
+}, win->handle, (unsigned int)win);
+
 }
 
 void exceptionHandler(void) {
@@ -1449,6 +1469,31 @@ void exceptionHandler(void) {
 	List_print(window_list, window_printer);
 */
 	while(1);
+}
+
+void putMouse(int x, int y) {
+
+    changeWindowPosition(mouse_window, x, y);
+}
+
+void moveMouse(short x_off, short y_off) {
+
+    mouse_x += x_off;
+    mouse_y += y_off;
+
+    if(mouse_x < 0)
+        mouse_x = 0;
+
+    if(mouse_x > root_window->w - 20)
+        mouse_x = root_window->w - 20;
+
+    if(mouse_y < 0)
+        mouse_y = 0;
+    
+    if(mouse_y > root_window->h - 20)
+        mouse_y = root_window->h - 20;
+
+    changeWindowPosition(mouse_window, mouse_x, mouse_y);
 }
 
 #ifdef HARNESS_TEST
@@ -1570,15 +1615,18 @@ void main(void) {
     mouse_x = root_window->w / 2 - 1;
     mouse_y = root_window->h / 2 - 1;
 
-    //Create a bitmap to store the mouse dirtyrect
-    if(!(old_mouse_bkg = newBitmap(MOUSE_WIDTH, MOUSE_HEIGHT))) {
+    //Create the mouse window
+    mouse_window = newWindow(20, 20, WIN_UNDECORATED | WIN_FIXEDSIZE | WIN_VISIBLE, 0);
+
+    //Fail if the mouse couldn't be created
+    if(!mouse_window) {
         
-        //prints("[WYG] Could not allocate a context for the mouse dirty buffer.\n");
-        //Need to do a list free here for the window_list
         postMessage(REGISTRAR_PID, REG_DEREGISTER, SVC_WYG);
-        postMessage(parent_pid, 0, 0); //Tell the parent we're done registering
+        postMessage(parent_pid, 0, 0);
         terminate();
-    } 
+    }
+
+    changeWindowPosition(mouse_window, mouse_x, mouse_y);
 
     postMessage(parent_pid, 0, 1); //Tell the parent we're done registering
 
@@ -1586,7 +1634,8 @@ void main(void) {
     for(i = 0; i < root_window->w * root_window->h; i++)
         root_window->context->data[i] = RGB(11, 162, 193);
     
-	drawWindow(root_window, 0);
+    drawWindow(root_window, 0);
+    drawWindow(mouse_window, 0);
 	        
     //Start debug console
     //init(root_window.w, 48);
