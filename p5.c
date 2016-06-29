@@ -70,8 +70,10 @@ int initMouse() {
     //into a buffer every time the mouse move event fires
     //on our canvas object
     EM_ASM(
-        if(window.mchange === undefined)
+        if(window.mchange === undefined) {
             window.mchange = false;
+            window.mouse = {x: 0, y: 0, down: 0};
+        }
 
         var canvas = document.getElementById('screen_canvas');
 
@@ -80,21 +82,34 @@ int initMouse() {
             var rect = canvas.getBoundingClientRect();
 
             window.mchange = true;
-            window.mouse = {x: event.clientX - rect.left, y: event.clientY - rect.top}; 
+            window.mouse = {x: event.clientX - rect.left, y: event.clientY - rect.top, down: window.mouse.down}; 
+        });
+
+        canvas.addEventListener('mousedown', function(event) {
+        
+            window.mchange = true;
+            window.mouse = {x: window.mouse.x, y: window.mouse.y, down: true};
+        });
+
+        canvas.addEventListener('mouseup', function(event) {
+        
+            window.mchange = true;
+            window.mouse = {x: window.mouse.x, y: window.mouse.y, down: false}; 
         });
     );
 
     return 1;
 }
 
-int checkMouse(int *x, int *y) {
+int checkMouse(int *x, int *y, unsigned char* buttons) {
 
     if(!EM_ASM_INT({ if(window.mchange) return 1; else return 0; }, 0))
         return 0;
 
     *x = EM_ASM_INT({ return window.mouse.x }, 0);
     *y = EM_ASM_INT({ return window.mouse.y }, 0);
- 
+    *buttons = EM_ASM_INT({ return window.mouse.down ? 1 : 0 }, 0); 
+
     EM_ASM(window.mchange = false;);
 
     return 1;

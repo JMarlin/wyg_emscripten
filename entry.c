@@ -12,8 +12,8 @@
 extern void WYG_main(void);
 extern unsigned char font_array[];
 extern int initMouse(void);
-extern int checkMouse(int* x, int* y);
-extern void putMouse(int x, int y);
+extern int checkMouse(int* x, int* y, unsigned char *buttons);
+extern void putMouse(int x, int y, unsigned char buttons);
 
 typedef struct window {
     unsigned char flags;
@@ -278,14 +278,15 @@ int finished = 0;
 void input_loop() {
 
     int mouse_x, mouse_y;
+    unsigned char buttons;
   
     //prints("::");
     //cmd_scans(50, inbuf);
 
     //Check the mouse
-    if(checkMouse(&mouse_x, &mouse_y)) {
+    if(checkMouse(&mouse_x, &mouse_y, &buttons)) {
        
-        putMouse(mouse_x, mouse_y);
+        putMouse(mouse_x, mouse_y, buttons);
     }
 
     temp_char = getch();

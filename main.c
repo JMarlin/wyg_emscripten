@@ -1471,9 +1471,52 @@ void exceptionHandler(void) {
 	while(1);
 }
 
-void putMouse(int x, int y) {
+unsigned char mouse_down = 0;
+window* drag_window = (window*)0;
+int drag_x, drag_y;
+
+void putMouse(int x, int y, unsigned char buttons) {
+
+    int i;
+    window* cur_window;
 
     changeWindowPosition(mouse_window, x, y);
+    
+    if(buttons) {
+
+        if(!mouse_down) {
+
+            mouse_down = 1;
+        
+            for(i = window_list->count - 2; i > 0; i--) {
+
+                cur_window = (window*)List_get_at(window_list, i);   
+
+                if(!cur_window || cur_window == root_window || cur_window == mouse_window) 
+                    continue;
+
+                if(x >= cur_window->x &&
+                   x < cur_window->x + cur_window->w &&
+                   y >= cur_window->y &&
+                   y < cur_window->y + cur_window->h) {
+
+                    drag_x = x - cur_window->x;
+                    drag_y = y - cur_window->y;
+                    drag_window = cur_window;
+                    break;
+                }
+            }
+        }
+    } else {
+       
+        mouse_down = 0;
+        drag_window = (window*)0;
+    }
+
+    if(mouse_down && drag_window) {
+   
+         changeWindowPosition(drag_window, x - drag_x, y - drag_y);
+    }
 }
 
 void moveMouse(short x_off, short y_off) {

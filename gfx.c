@@ -205,8 +205,12 @@ void drawBitmap(bitmap* bmp) {
         
     int width = bmp->right - bmp->left + 1;
     int height = bmp->bottom - bmp->top + 1; 
+
+    if(width <= 0 || height <= 0)
+        return;
     
     EM_ASM_({
+        //console.log("new ImageData("+$0+", "+$1+");");
         window.imgdata = new ImageData($0, $1);
     }, width, height);
 

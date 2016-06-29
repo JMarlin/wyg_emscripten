@@ -33,7 +33,7 @@ void List_delete(List* list, deleter del_func) {
 			
 	    //Delete in reverse order
 		//cmd_prints("Starting deletion");
-		while(current_item) {
+		while(current_item && list->count) {
 		 
 		    //cmd_prints("Getting previous item");
 		    //Temporarily store the previous element so that we don't lose it
