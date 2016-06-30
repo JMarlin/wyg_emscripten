@@ -227,8 +227,8 @@ void drawBitmap(bitmap* bmp) {
                  window.imgdata.data[i + 0] = $3;
                  window.imgdata.data[i + 1] = $4;
                  window.imgdata.data[i + 2] = $5;
-                 window.imgdata.data[i + 3] = 255;
-             }, width, srcx, srcy, RVAL(color), GVAL(color), BVAL(color));
+                 window.imgdata.data[i + 3] = $6;
+             }, width, srcx, srcy, RVAL(color), GVAL(color), BVAL(color), color == bmp->mask_color ? 0 : 255);
         }
     }
 
