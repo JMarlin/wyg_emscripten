@@ -169,12 +169,16 @@ unsigned int startV86(unsigned char* path) {
 
 void prints(char* s) {
 
+EM_ASM_({console.log(Module.Pointer_stringify($0));}, s);
+
+/*
     int index = 0;
 
     while(s[index] != 0) {
         pchar(s[index]);
         index++;
     }
+*/
 }
 
 unsigned char digitToHex(unsigned char digit) {

@@ -92,6 +92,8 @@ void* List_pop(List* list, void* value) {
     
     if(cur_item->prev)
         cur_item->prev->next = cur_item->next;
+    else
+        list->root_item = cur_item->next;
         
     if(cur_item->next)
         cur_item->next->prev = cur_item->prev;

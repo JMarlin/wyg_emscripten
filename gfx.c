@@ -192,6 +192,8 @@ bitmap* newBitmap(unsigned int width, unsigned int height) {
             
         return_bmp->data[i] = 0;
     }
+
+    return_bmp->mask_color = 0;
         
     return return_bmp;
 }
@@ -208,11 +210,10 @@ void drawBitmap(bitmap* bmp) {
 
     if(width <= 0 || height <= 0)
         return;
-    
+
     EM_ASM_({
-        //console.log("new ImageData("+$0+", "+$1+");");
-        window.imgdata = new ImageData($0, $1);
-    }, width, height);
+        window.imgdata = window.screen_ctx.getImageData($0, $1, $2, $3);
+    }, pen_x + bmp->left, pen_y + bmp->top, width, height);
 
     int srcx, srcy;
     unsigned int color;
@@ -223,12 +224,15 @@ void drawBitmap(bitmap* bmp) {
              color = bmp->data[(srcx + bmp->left) + ((srcy + bmp->top) * bmp->width)];
              
              EM_ASM_({
+ 
+                 if($6 === 1) return;
+
                  var i = ($1 + ($2 * $0)) * 4;
                  window.imgdata.data[i + 0] = $3;
                  window.imgdata.data[i + 1] = $4;
                  window.imgdata.data[i + 2] = $5;
-                 window.imgdata.data[i + 3] = $6;
-             }, width, srcx, srcy, RVAL(color), GVAL(color), BVAL(color), color == bmp->mask_color ? 0 : 255);
+                 window.imgdata.data[i + 3] = 255;
+             }, width, srcx, srcy, RVAL(color), GVAL(color), BVAL(color), bmp->mask_color ? color == bmp->mask_color ? 1 : 0 : 0);
         }
     }
 

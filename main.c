@@ -588,7 +588,6 @@ void drawOccluded(window* win, Rect* baserect, List* splitrect_list) {
                     new_rect = Rect_new(rect->top, rect->left, rect->bottom, rect->right);
                     
                     if(!new_rect) {
-					    
 						List_delete(clip_list, Rect_deleter);
 						List_delete(out_rects, Rect_deleter);	
                         return;
@@ -604,7 +603,7 @@ void drawOccluded(window* win, Rect* baserect, List* splitrect_list) {
 				}
 				
 				//Free the space that was used for the split 
-				List_delete(clip_list, Rect_deleter);
+                                List_delete(clip_list, Rect_deleter);
 				
 				//Restart the list 
 				List_rewind(out_rects);
@@ -1148,7 +1147,8 @@ List* getOverlappingWindows(int lowest_z_level, Rect* baserect) {
 	List_for_each_skip(window_list, cur_window, window*, lowest_z_level) {
 		
 		//Count the window only if it overlaps
-		if(cur_window->x <= baserect->right &&
+		if(cur_window->context->mask_color == 0 &&
+                   cur_window->x <= baserect->right &&
 		   (cur_window->x + cur_window->context->width - 1) >= baserect->left &&
 		   cur_window->y <= baserect->bottom && 
 		   (cur_window->y + cur_window->context->height - 1) >= baserect->top) {
@@ -1539,6 +1539,34 @@ void moveMouse(short x_off, short y_off) {
     changeWindowPosition(mouse_window, mouse_x, mouse_y);
 }
 
+#define MOUSE_WIDTH 11
+#define MOUSE_HEIGHT 18
+#define MOUSE_BUFSZ (MOUSE_WIDTH * MOUSE_HEIGHT)
+#define CA 0x0
+#define CB 0xFFFFFF
+#define CD 0xFF000000
+
+unsigned int mouse_img[MOUSE_BUFSZ] = {
+CA, CD, CD, CD, CD, CD, CD, CD, CD, CD, CD,
+CA, CA, CD, CD, CD, CD, CD, CD, CD, CD, CD,
+CA, CB, CA, CD, CD, CD, CD, CD, CD, CD, CD,
+CA, CB, CB, CA, CD, CD, CD, CD, CD, CD, CD,
+CA, CB, CB, CB, CA, CD, CD ,CD, CD, CD, CD,
+CA, CB, CB, CB, CB, CA, CD, CD, CD, CD, CD,
+CA, CB, CB, CB, CB, CB, CA, CD, CD, CD, CD,
+CA, CB, CB, CB, CB, CB, CB, CA, CD, CD, CD,
+CA, CB, CB, CB, CB, CB, CB, CB, CA, CD, CD,
+CA, CB, CB, CB, CB, CB, CB, CB, CB, CA, CD,
+CA, CB, CB, CB, CB, CB, CB, CB, CB, CB, CA,
+CA, CA, CA, CA, CB, CB, CB, CA, CA, CA, CA,
+CD, CD, CD, CD, CA, CB, CB, CA, CD, CD, CD,
+CD, CD, CD, CD, CA, CB, CB, CA, CD, CD, CD,
+CD, CD, CD, CD, CD, CA, CB, CB, CA, CD, CD,
+CD, CD, CD, CD, CD, CA, CB, CB, CA, CD, CD,
+CD, CD, CD, CD, CD, CD, CA, CB, CA, CD, CD,
+CD, CD, CD, CD, CD, CD, CD, CA, CA, CD, CD 
+};
+
 #ifdef HARNESS_TEST
 void WYG_main(void) {
 #else 
@@ -1659,7 +1687,7 @@ void main(void) {
     mouse_y = root_window->h / 2 - 1;
 
     //Create the mouse window
-    mouse_window = newWindow(20, 20, WIN_UNDECORATED | WIN_FIXEDSIZE | WIN_VISIBLE, 0);
+    mouse_window = newWindow(MOUSE_WIDTH, MOUSE_HEIGHT, WIN_UNDECORATED | WIN_FIXEDSIZE | WIN_VISIBLE, 0);
 
     //Fail if the mouse couldn't be created
     if(!mouse_window) {
@@ -1676,6 +1704,12 @@ void main(void) {
     //Paint the initial scene
     for(i = 0; i < root_window->w * root_window->h; i++)
         root_window->context->data[i] = RGB(11, 162, 193);
+
+    //Paint the mouse cursor
+    mouse_window->context->mask_color = CD;
+
+    for(i = 0; i < MOUSE_BUFSZ; i++)
+        mouse_window->context->data[i] = mouse_img[i];
     
     drawWindow(root_window, 0);
     drawWindow(mouse_window, 0);
