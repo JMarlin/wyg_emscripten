@@ -1182,6 +1182,11 @@ List* getOverlappingWindows(int lowest_z_level, Rect* baserect) {
     return rect_list;
 }
 
+//To be used in raise window code
+void drawWindowIntersects(window* cur_window, unsigned char use_current_blit) {
+
+}
+
 void drawWindow(window* cur_window, unsigned char use_current_blit) {
      
     unsigned int rect_count;
