@@ -358,7 +358,7 @@ List* splitRect(Rect* rdest, Rect* rknife) {
 	
 //    cons_prints("Doing left edge split\n");
 	//Split by left edge
-	if(rknife->left > baserect.left && rknife->left < baserect.right) {
+	if(rknife->left >= baserect.left && rknife->left <= baserect.right) {
 		
 		new_rect = Rect_new(baserect.top, baserect.left, baserect.bottom, rknife->left - 1);
 		
@@ -380,7 +380,7 @@ List* splitRect(Rect* rdest, Rect* rknife) {
 
 //    cons_prints("Doing top edge split\n");
 	//Split by top edge
-	if(rknife->top < baserect.bottom && rknife->top > baserect.top) {
+	if(rknife->top <= baserect.bottom && rknife->top >= baserect.top) {
 		
 		new_rect = Rect_new(baserect.top, baserect.left, rknife->top - 1, baserect.right);
 		
@@ -402,7 +402,7 @@ List* splitRect(Rect* rdest, Rect* rknife) {
 
 //    cons_prints("Doing right edge split\n");
 	//Split by right edge
-	if(rknife->right > baserect.left && rknife->right < baserect.right) {
+	if(rknife->right >= baserect.left && rknife->right <= baserect.right) {
 		
 		new_rect = Rect_new(baserect.top, rknife->right + 1, baserect.bottom, baserect.right);
 		
@@ -424,7 +424,7 @@ List* splitRect(Rect* rdest, Rect* rknife) {
 
 //    cons_prints("Doing bottom edge split\n");
 	//Split by bottom edge
-	if(rknife->bottom > baserect.top && rknife->bottom < baserect.bottom) {
+	if(rknife->bottom >= baserect.top && rknife->bottom <= baserect.bottom) {
 		
 		new_rect = Rect_new(rknife->bottom + 1, baserect.left, baserect.bottom, baserect.right);
 		
@@ -801,7 +801,7 @@ void updateOverlapped(Rect* window_bounds, window* avoid_window) {
         comp_rect.right = comp_rect.left + cur_window->w - 1;
         
         if((cur_window->flags & WIN_VISIBLE) && 
-		   window_bounds->left <= comp_rect.right &&
+	   window_bounds->left <= comp_rect.right &&
            window_bounds->right >= comp_rect.left &&
            window_bounds->top <= comp_rect.bottom && 
            window_bounds->bottom >= comp_rect.top) {
@@ -1165,7 +1165,7 @@ List* getOverlappingWindows(int lowest_z_level, Rect* baserect) {
 					List_delete(rect_list, Rect_deleter);
 					return (List*)0;
 				}
-		}
+		} 
 	}
         
     return rect_list;

@@ -3261,7 +3261,7 @@ function _splitRect($rdest,$rknife) {
  $23 = HEAP32[$22>>2]|0; //@line 361 "main.c"
  $24 = ((($baserect)) + 12|0); //@line 361 "main.c"
  $25 = HEAP32[$24>>2]|0; //@line 361 "main.c"
- $26 = ($23>>>0)>($25>>>0); //@line 361 "main.c"
+ $26 = ($23>>>0)>=($25>>>0); //@line 361 "main.c"
  do {
   if ($26) {
    $27 = $2; //@line 361 "main.c"
@@ -3269,7 +3269,7 @@ function _splitRect($rdest,$rknife) {
    $29 = HEAP32[$28>>2]|0; //@line 361 "main.c"
    $30 = ((($baserect)) + 4|0); //@line 361 "main.c"
    $31 = HEAP32[$30>>2]|0; //@line 361 "main.c"
-   $32 = ($29>>>0)<($31>>>0); //@line 361 "main.c"
+   $32 = ($29>>>0)<=($31>>>0); //@line 361 "main.c"
    if ($32) {
     $33 = HEAP32[$baserect>>2]|0; //@line 363 "main.c"
     $34 = ((($baserect)) + 12|0); //@line 363 "main.c"
@@ -3316,13 +3316,13 @@ function _splitRect($rdest,$rknife) {
  $56 = HEAP32[$55>>2]|0; //@line 383 "main.c"
  $57 = ((($baserect)) + 8|0); //@line 383 "main.c"
  $58 = HEAP32[$57>>2]|0; //@line 383 "main.c"
- $59 = ($56>>>0)<($58>>>0); //@line 383 "main.c"
+ $59 = ($56>>>0)<=($58>>>0); //@line 383 "main.c"
  do {
   if ($59) {
    $60 = $2; //@line 383 "main.c"
    $61 = HEAP32[$60>>2]|0; //@line 383 "main.c"
    $62 = HEAP32[$baserect>>2]|0; //@line 383 "main.c"
-   $63 = ($61>>>0)>($62>>>0); //@line 383 "main.c"
+   $63 = ($61>>>0)>=($62>>>0); //@line 383 "main.c"
    if ($63) {
     $64 = HEAP32[$baserect>>2]|0; //@line 385 "main.c"
     $65 = ((($baserect)) + 12|0); //@line 385 "main.c"
@@ -3367,7 +3367,7 @@ function _splitRect($rdest,$rknife) {
  $85 = HEAP32[$84>>2]|0; //@line 405 "main.c"
  $86 = ((($baserect)) + 12|0); //@line 405 "main.c"
  $87 = HEAP32[$86>>2]|0; //@line 405 "main.c"
- $88 = ($85>>>0)>($87>>>0); //@line 405 "main.c"
+ $88 = ($85>>>0)>=($87>>>0); //@line 405 "main.c"
  do {
   if ($88) {
    $89 = $2; //@line 405 "main.c"
@@ -3375,7 +3375,7 @@ function _splitRect($rdest,$rknife) {
    $91 = HEAP32[$90>>2]|0; //@line 405 "main.c"
    $92 = ((($baserect)) + 4|0); //@line 405 "main.c"
    $93 = HEAP32[$92>>2]|0; //@line 405 "main.c"
-   $94 = ($91>>>0)<($93>>>0); //@line 405 "main.c"
+   $94 = ($91>>>0)<=($93>>>0); //@line 405 "main.c"
    if ($94) {
     $95 = HEAP32[$baserect>>2]|0; //@line 407 "main.c"
     $96 = $2; //@line 407 "main.c"
@@ -3422,7 +3422,7 @@ function _splitRect($rdest,$rknife) {
  $118 = ((($117)) + 8|0); //@line 427 "main.c"
  $119 = HEAP32[$118>>2]|0; //@line 427 "main.c"
  $120 = HEAP32[$baserect>>2]|0; //@line 427 "main.c"
- $121 = ($119>>>0)>($120>>>0); //@line 427 "main.c"
+ $121 = ($119>>>0)>=($120>>>0); //@line 427 "main.c"
  do {
   if ($121) {
    $122 = $2; //@line 427 "main.c"
@@ -3430,7 +3430,7 @@ function _splitRect($rdest,$rknife) {
    $124 = HEAP32[$123>>2]|0; //@line 427 "main.c"
    $125 = ((($baserect)) + 8|0); //@line 427 "main.c"
    $126 = HEAP32[$125>>2]|0; //@line 427 "main.c"
-   $127 = ($124>>>0)<($126>>>0); //@line 427 "main.c"
+   $127 = ($124>>>0)<=($126>>>0); //@line 427 "main.c"
    if ($127) {
     $128 = $2; //@line 429 "main.c"
     $129 = ((($128)) + 8|0); //@line 429 "main.c"
