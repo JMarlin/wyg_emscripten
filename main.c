@@ -677,35 +677,45 @@ window* newWindow(unsigned int width, unsigned int height, unsigned char flags, 
         new_window->context->data[i] = RGB(255, 255 ,255);
         
     new_window->handle = next_handle++;
+
+    if(mouse_window)
+        List_pop(window_list, (void*)mouse_window);
+
+    //De-activate the old active window
+    if(temp_window = (window*)List_get_at(window_list, window_list->count - 1)) {
+
+        temp_window->active = 0;
+    } 
 	
-	//De-activate the old active window
-	if(temp_window = (window*)List_get_at(window_list, window_list->count - 1)) {
+	
+    if(!List_add(window_list, (void*)new_window)){
 		
-	    temp_window->active = 0;
-	} 
-	
-	if(!List_add(window_list, (void*)new_window)){
+	freeBitmap(new_window->context);
+        free((void*)new_window);
 		
-		freeBitmap(new_window->context);
-	    free((void*)new_window);
-		
-		//re-activate the old active window
-		if(temp_window)
-		    temp_window->active = 1;
-        
-		return (window*)0;	
-	}
-    
-	//Give the new window its initial decoration
-	if(!(new_window->flags & WIN_UNDECORATED))
-	    drawFrame(new_window);
-	
-	drawWindow(new_window, 0);
-	
-	//Update the titlebar on the old active window 
+ 	//re-activate the old active window
 	if(temp_window)
-		drawTitlebar(temp_window, 0);
+	    temp_window->active = 1;
+        
+	return (window*)0;	
+    }
+    
+    //Give the new window its initial decoration
+    if(!(new_window->flags & WIN_UNDECORATED))
+        drawFrame(new_window);
 	
+    drawWindow(new_window, 0);
+	
+    //Update the titlebar on the old active window 
+    if(temp_window)
+ 	drawTitlebar(temp_window, 1);
+	
+    if(mouse_window) {
+
+        List_add(window_list, mouse_window);
+        drawWindow(mouse_window, 0);
+    }
+
     //cmd_printDecimal(new_window->handle);
     //pchar('\n');
     return new_window;
@@ -1079,7 +1089,7 @@ void drawTitlebar(window* cur_window, int do_refresh) {
 		cur_window->context->top = 4;
 		cur_window->context->left = 4;
 		cur_window->context->bottom = 23;
-		cur_window->context->right = cur_window->context->right - 25;
+		cur_window->context->right = cur_window->w - 26;
 		
 		drawWindow(cur_window, 1);
 		
@@ -1248,10 +1258,11 @@ void raiseWindow(window* dest_window) {
             
     //Can't raise the root window, mouse window, a null window pointer or if there's nothing but the root and
     //mouse in the window list
-    if(dest_window == root_window || dest_window == mouse_window || !dest_window || window_list->count == 2)
+    if(dest_window == root_window || dest_window == mouse_window || !dest_window || window_list->count <= 2)
         return;
         
-    //Get the previously active window 
+    //Get the previously active window (will be one deeper than the mouse, hence
+    //-2 instead of normal -1)
     old_active = (window*)List_get_at(window_list, window_list->count - 2);
     
     //If we were already active we don't need to do anything else 
@@ -1277,7 +1288,7 @@ void raiseWindow(window* dest_window) {
     old_active->active = 0;
     dest_window->active = 1;
     drawTitlebar(old_active, 1);
-    drawTitlebar(dest_window, 0);
+    drawTitlebar(dest_window, 1);
 	
     //If the window isn't visible, it will need to be in order to be
     //raised, otherwise we just redraw (would be more efficient in
