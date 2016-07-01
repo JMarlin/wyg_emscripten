@@ -941,11 +941,11 @@ void markWindowVisible(window* dest_window, unsigned char is_visible) {
     if(is_visible) {
                
         dest_window->flags |= WIN_VISIBLE;
-		drawWindow(dest_window, 0);
+	drawWindow(dest_window, 0);
     } else {
         
         dest_window->flags &= ~((unsigned char)WIN_VISIBLE);
-		overlap_rect.top = dest_window->y;
+	overlap_rect.top = dest_window->y;
         overlap_rect.left = dest_window->x;
         overlap_rect.bottom = overlap_rect.top + dest_window->h - 1;
         overlap_rect.right = overlap_rect.left + dest_window->w - 1;
@@ -1157,7 +1157,8 @@ List* getOverlappingWindows(int lowest_z_level, Rect* baserect) {
 	List_for_each_skip(window_list, cur_window, window*, lowest_z_level) {
 		
 		//Count the window only if it overlaps
-		if(cur_window->context->mask_color == 0 &&
+		if((cur_window->flags & WIN_VISIBLE) && 
+                   cur_window->context->mask_color == 0 &&
                    cur_window->x <= baserect->right &&
 		   (cur_window->x + cur_window->context->width - 1) >= baserect->left &&
 		   cur_window->y <= baserect->bottom && 
@@ -1341,7 +1342,7 @@ void destroy(window* dest_window) {
             
     //Start by hiding the window 
     markWindowVisible(dest_window, 0);
-	List_remove(window_list, (void*)dest_window, window_deleter);
+    List_remove(window_list, (void*)dest_window, window_deleter);
     active_window = (window*)List_get_at(window_list, window_list->count - 1);
 	
 	if(!active_window)
