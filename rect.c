@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include "../include/memory.h"
 #include "rect.h"
 
 //Used to delete the elements of a list when those elements are 

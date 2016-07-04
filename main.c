@@ -1465,6 +1465,7 @@ void window_printer(void* value) {
 
 	window* win = (window*)value;
 
+/*    
 EM_ASM_({	
 	console.log("    window " +
 	            $0            +
@@ -1472,7 +1473,7 @@ EM_ASM_({
 	            $1
         );
 }, win->handle, (unsigned int)win);
-
+*/
 }
 
 void exceptionHandler(void) {
