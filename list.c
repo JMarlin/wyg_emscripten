@@ -1,4 +1,5 @@
-#include "../include/memory.h"
+//#include "../include/memory.h"
+#include "../p5-redux/P5OSPPB/mods/include/memory.h" //HARNESS
 #include "list.h"
 
 List* List_new(void) {
