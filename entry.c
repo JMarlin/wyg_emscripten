@@ -329,6 +329,19 @@ void makeWindows() {
 */
 }
 
+//Called by wyg in the test harness
+void message_client(int handle, int x, int y, unsigned char buttons, unsigned char key, unsigned char evt) {
+
+    if(window_b && handle == window_b) {
+
+        if(buttons) {
+
+            bitmap* ctx = getWindowContext(window_b);
+            ctx->data[y*ctx->width + x] = RGB(255, 0, 255);
+        }
+    }
+}
+
 unsigned char temp_char = 0;
 int inbuf_ptr = 0;
 int finished = 0;

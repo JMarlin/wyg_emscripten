@@ -1,7 +1,6 @@
 //#include "../include/memory.h"
 #include "../p5-redux/P5OSPPB/mods/include/memory.h" //HARNESS
 #include "list.h"
-#include <stdio.h>
 
 List* List_new(void) {
     
@@ -65,21 +64,17 @@ void* List_pop(List* list, void* value) {
 	
     ListItem* cur_item = list->root_item;
     void* ret_val;
-    int i = 0; 
 
     if(!value || list->count == 0) 
         return (void*)0;
         
     while(cur_item && (cur_item->value != value)) {
   
-        i++;
-        printf("cur_item@ %x", cur_item); 
         cur_item = cur_item->next;
     }
         
     if(!cur_item) {
 
-        printf("cur_item empty @ i = %i\n", i);
         return (void*)0;
     }
     
@@ -151,7 +146,6 @@ int List_add(List* list, void* value) {
         current_item->next = new_item; 
     }
     
-    printf("NEW ITEM: prev=%x next=%x\n", new_item->prev, new_item->next);
 
     list->count++;
 	
@@ -211,7 +205,7 @@ void* List_get_at(List* list, int index) {
 	    index--;
 	}
     
-    if(!cur_item) printf("Exceeded the end of the list!\n");
+//    if(!cur_item) printf("Exceeded the end of the list!\n");
 
     return cur_item ? cur_item->value : (void*)0;
 }

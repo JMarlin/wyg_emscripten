@@ -1533,46 +1533,62 @@ unsigned char mouse_down = 0;
 window* drag_window = (window*)0;
 int drag_x, drag_y;
 
+//Normally called by mouse_move in turn from the message loop,
+//but directly called from the canvas event handler in the 
+//test harness
+#ifdef HARNESS_TEST
+extern void message_client(int window, int mouse_x, int mouse_y, unsigned char buttons, unsigned char key, unsigned char evt); 
+#endif
 void putMouse(int x, int y, unsigned char buttons) {
 
     int i;
     window* cur_window;
+    window* over_window = (window*)0;
 
     changeWindowPosition(mouse_window, x, y);
     
+    for(i = window_list->count -2; i > 0; i--) {
+    
+        cur_window = (window*)List_get_at(window_list, i);
+
+        if(!cur_window || cur_window == root_window || cur_window == mouse_window)
+            continue;
+
+        if(x >= cur_window->x &&
+           x < cur_window->x + cur_window->w &&
+           y >= cur_window->y &&
+           y < cur_window->y + cur_window->h) {
+
+            over_window = cur_window;
+            break;
+        }
+    }
+
     if(buttons) {
 
         if(!mouse_down) {
 
             mouse_down = 1;
-        
-            for(i = window_list->count - 2; i > 0; i--) {
+            if(over_window && y < over_window->y + FRAME_SIZE_TOP && !(over_window->flags & WIN_NODRAG)) {
 
-                cur_window = (window*)List_get_at(window_list, i);   
-
-                if(!cur_window || cur_window == root_window || cur_window == mouse_window) 
-                    continue;
-
-                if(x >= cur_window->x &&
-                   x < cur_window->x + cur_window->w &&
-                   y >= cur_window->y &&
-                   y < cur_window->y + cur_window->h) {
-                    
-                   if(!(cur_window->flags & WIN_NODRAG)) {
-
-                        drag_x = x - cur_window->x;
-                        drag_y = y - cur_window->y;
-                        drag_window = cur_window;
-                   }
-
-                    break;
-                }
+                drag_window = over_window;
+                drag_x = x - over_window->x;
+                drag_y = y - over_window->y;
             }
         }
     } else {
-       
+
         mouse_down = 0;
         drag_window = (window*)0;
+    }
+
+    if(!drag_window && over_window) {
+
+#ifdef HARNESS_TEST
+        message_client(over_window->handle, x - over_window->x, y - over_window->y, buttons, ' ', 1);
+#else
+        postMessage(over_window->pid, 0, 0); //Need to specify a protocol for this
+#endif //HARNESS_TEST
     }
 
     if(mouse_down && drag_window) {
@@ -1581,7 +1597,8 @@ void putMouse(int x, int y, unsigned char buttons) {
     }
 }
 
-void moveMouse(short x_off, short y_off) {
+//Should be called by the message loop when in situ
+void moveMouse(short x_off, short y_off, unsigned char buttons) {
 
     mouse_x += x_off;
     mouse_y += y_off;
@@ -1598,7 +1615,7 @@ void moveMouse(short x_off, short y_off) {
     if(mouse_y > root_window->h - 20)
         mouse_y = root_window->h - 20;
 
-    changeWindowPosition(mouse_window, mouse_x, mouse_y);
+    putMouse(mouse_x, mouse_y, buttons); 
 }
 
 #define MOUSE_WIDTH 11
