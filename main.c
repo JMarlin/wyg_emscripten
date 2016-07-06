@@ -29,8 +29,6 @@ extern void testMain();
 #define FRAME_SIZE_LEFT 4
 #define FRAME_SIZE_BOTTOM 4
 #define FRAME_SIZE_RIGHT 4
-#define MOUSE_WIDTH 12
-#define MOUSE_HEIGHT 12
 
 /* Windows are logically arranged as follows:
 desktop.first_child:  window_a.first_child:  button_1.first_child:  -
@@ -45,6 +43,7 @@ Linkage is in order of increasing z-value
 #define new(x) (((x)*)malloc(sizeof(x)))
 
 void window_printer(void* value);
+
 
 message temp_msg;
 
@@ -72,6 +71,21 @@ bitmap* old_mouse_bkg;
 unsigned short mouse_x;
 unsigned short mouse_y;
 unsigned char mouse_buffer_ok = 0;
+
+void print_list(void);
+
+void print_list() {
+
+    int i;
+    ListItem* cur = window_list->root_item;
+
+    while(cur) {
+
+        printf("%x: prev=%x next=%x\n", cur, cur->prev, cur->next); 
+        cur = cur->next;
+    }
+};
+
 
 /*!!!!!!!!!! DEBUG SHIT !!!!!!!!!
 unsigned char cmd_x;
@@ -648,11 +662,12 @@ window* newWindow(unsigned int width, unsigned int height, unsigned char flags, 
     	
     if(!(new_window = (window*)malloc(sizeof(window)))) {
         
+        printf("Coudln't allocate a new window structure");
         return 0;
     }
         
     new_window->active = 1;
-	new_window->pid = pid;
+    new_window->pid = pid;
     new_window->flags = flags;
     new_window->x = 0;
     new_window->y = 0;
@@ -665,6 +680,7 @@ window* newWindow(unsigned int width, unsigned int height, unsigned char flags, 
     if(!(new_window->context = newBitmap(new_window->w, new_window->h))) {
         
         free((void*)new_window);
+        printf("Couldn't allocate bitmap area for new window");
         return (window*)0;
     } 
     
@@ -676,15 +692,20 @@ window* newWindow(unsigned int width, unsigned int height, unsigned char flags, 
         
     new_window->handle = next_handle++;
 
+    printf("(m1) window_list->count from %i to ", window_list->count);
+
     if(mouse_window)
         List_pop(window_list, (void*)mouse_window);
 
+    printf("%i\n", window_list->count);
+
     //De-activate the old active window
-    if(temp_window = (window*)List_get_at(window_list, window_list->count - 1)) {
+    if(temp_window = (window*)List_get_at(window_list, window_list->count - (mouse_window ? 2 : 1))) {
 
         temp_window->active = 0;
     } 
 	
+    printf("(w) window_list->count from %i to ", window_list->count);
 	
     if(!List_add(window_list, (void*)new_window)){
 		
@@ -695,8 +716,11 @@ window* newWindow(unsigned int width, unsigned int height, unsigned char flags, 
 	if(temp_window)
 	    temp_window->active = 1;
         
+        printf("Couldn't add window to window list");
 	return (window*)0;	
     }
+
+    printf("%i\n", window_list->count);
     
     //Give the new window its initial decoration
     if(!(new_window->flags & WIN_UNDECORATED))
@@ -708,11 +732,15 @@ window* newWindow(unsigned int width, unsigned int height, unsigned char flags, 
     if(temp_window)
  	drawTitlebar(temp_window, 1);
 	
+    printf("(m2) window_list->count from %i to ", window_list->count); 
+    
     if(mouse_window) {
 
         List_add(window_list, mouse_window);
         drawWindow(mouse_window, 0);
     }
+
+    printf("%i\n", window_list->count);
 
     //cmd_printDecimal(new_window->handle);
     //pchar('\n');
@@ -726,19 +754,33 @@ unsigned int newWindowHandle(unsigned int width, unsigned int height, unsigned c
 	if(ret_window)
 	    return ret_window->handle;
 	
-	return 0;
+	printf("Window creater returned null pointer");
+        return 0;
 }
 
 window* getWindowByHandle(unsigned int handle) {
     
-	window* out_window;
-	    
-    List_for_each(window_list, out_window, window*) {
-        
-		if(out_window->handle == handle)
-		    return out_window;
+    window* out_window;
+    
+    printf("Looking for window in %i\n", window_list->count);
+
+    int i; 
+    for(i = 0; i < window_list->count; i++) {
+
+       out_window = (window*)List_get_at(window_list, i); 
+
+       if(!out_window) printf("Got an empty pointer!");
+
+       printf("    cmp: %i ?= %i\n", handle, out_window->handle);
+
+	if(out_window->handle == handle) {
+
+            printf("Found\n");
+	    return out_window;
+        }
     }
     
+    printf("Not found\n");
     return (window*)0;
 }
 
@@ -780,10 +822,11 @@ bitmap* getWindowContext(unsigned int handle) {
     
     if(!dest_window) {
      
-         //prints("[WYG] Couldn't find the window to get its context\n");   
+         prints("[WYG] Couldn't find the window to get its context\n");   
         return (bitmap*)0;
     }
         
+    printf("(%i, %i)\n", dest_window->context->width, dest_window->context->height);
     return dest_window->context;
 }
 
@@ -1514,10 +1557,14 @@ void putMouse(int x, int y, unsigned char buttons) {
                    x < cur_window->x + cur_window->w &&
                    y >= cur_window->y &&
                    y < cur_window->y + cur_window->h) {
+                    
+                   if(!(cur_window->flags & WIN_NODRAG)) {
 
-                    drag_x = x - cur_window->x;
-                    drag_y = y - cur_window->y;
-                    drag_window = cur_window;
+                        drag_x = x - cur_window->x;
+                        drag_y = y - cur_window->y;
+                        drag_window = cur_window;
+                   }
+
                     break;
                 }
             }

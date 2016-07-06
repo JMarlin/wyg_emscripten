@@ -1,6 +1,7 @@
 //#include "../include/memory.h"
 #include "../p5-redux/P5OSPPB/mods/include/memory.h" //HARNESS
 #include "list.h"
+#include <stdio.h>
 
 List* List_new(void) {
     
@@ -62,17 +63,25 @@ void List_delete(List* list, deleter del_func) {
 
 void* List_pop(List* list, void* value) {
 	
-	ListItem* cur_item = list->root_item;
-	void* ret_val;
-    
+    ListItem* cur_item = list->root_item;
+    void* ret_val;
+    int i = 0; 
+
     if(!value || list->count == 0) 
         return (void*)0;
         
-    while(cur_item && (cur_item->value != value))
+    while(cur_item && (cur_item->value != value)) {
+  
+        i++;
+        printf("cur_item@ %x", cur_item); 
         cur_item = cur_item->next;
+    }
         
-    if(!cur_item)
+    if(!cur_item) {
+
+        printf("cur_item empty @ i = %i\n", i);
         return (void*)0;
+    }
     
     if(cur_item == list->current_item) {
         
@@ -83,13 +92,10 @@ void* List_pop(List* list, void* value) {
             
             list->current_item = cur_item->next;
         } else {
-            
+  
             list->current_item = (ListItem*)0;
-            list->root_item = (ListItem*)0;
         }
     }
-    
-
     
     if(cur_item->prev)
         cur_item->prev->next = cur_item->next;
@@ -128,7 +134,7 @@ int List_add(List* list, void* value) {
     
     new_item->value = value;
     new_item->next = (ListItem*)0;
-	new_item->prev = (ListItem*)0;
+    new_item->prev = (ListItem*)0;
         
     if(!list->root_item) {
         
@@ -145,6 +151,8 @@ int List_add(List* list, void* value) {
         current_item->next = new_item; 
     }
     
+    printf("NEW ITEM: prev=%x next=%x\n", new_item->prev, new_item->next);
+
     list->count++;
 	
     return 1;
@@ -197,12 +205,14 @@ void* List_get_at(List* list, int index) {
 	if(index < 0) 
 	    index = 0;
     
-    while(index) {
+    while(index && cur_item) {
 		
         cur_item = cur_item->next;
 	    index--;
 	}
     
+    if(!cur_item) printf("Exceeded the end of the list!\n");
+
     return cur_item ? cur_item->value : (void*)0;
 }
 

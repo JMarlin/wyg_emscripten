@@ -14,6 +14,8 @@ extern unsigned char font_array[];
 extern int initMouse(void);
 extern int checkMouse(int* x, int* y, unsigned char *buttons);
 extern void putMouse(int x, int y, unsigned char buttons);
+extern void print_list();
+
 
 typedef struct window {
     unsigned char flags;
@@ -32,7 +34,7 @@ typedef struct window {
     unsigned char frame_needs_redraw;
 } window;
 
-int off_top, off_left, off_bottom, off_right;
+unsigned char off_top, off_left, off_bottom, off_right;
 
 int main(int argc, char** argv) {
 	
@@ -218,17 +220,73 @@ int closeChild() {
 
 void input_loop();
 
+unsigned int desktop = 0;
+
 void makeWindows() {
     
     unsigned short w, h;
+
+    unsigned int tile_data[] = {
+        0x00000000, 0x00000000, 0x00000000, 0xFFFFFFFF,
+        0x00000000, 0xFFFFFFFF, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0xFFFFFFFF, 0x00000000,
+        0xFFFFFFFF, 0x00000000, 0x00000000, 0x00000000
+    };
 
     getFrameDims(&off_top, &off_left, &off_bottom, &off_right);
         
     //Make two windows
     getWindowDimensions(ROOT_WINDOW, &w, &h);
+
+    printf("Creating desktop\n");
     
+    desktop = createWindow(w - 2, h - 2, WIN_FIXEDSIZE | WIN_UNDECORATED | WIN_NODRAG);
+
+    print_list();
+
+    printf("Done creating %i, setting title\n", desktop);
+
+    print_list();
+
+    setTitle(desktop, "DESKTOP");
+
+    print_list();
+
+    //Paint a pretty picture into window A
+    bitmap* desk_bmp = getWindowContext(desktop);
+    int x, y; 
+
+    print_list();
+
+    //This SHOULD tile the tile image across the window
+    for(x = 0; x < w - 2; x++)
+        for(y = 0; y < h - 2; y++)
+            desk_bmp->data[y*(w-2) + x] = tile_data[(y%4)*4 + (x%4)];
+
+
+    print_list();
+
+    printf("Done with title, installing\n");
+
+    //installWindow(desktop, ROOT_WINDOW);
+
+    print_list();
+
+    printf("Done installing, moving to top left\n");
+
+    print_list();
+
+    moveHandle(desktop, 1, 1);
+
+    print_list();
+
+    showWindow(desktop); 
+
+    print_list();
+
     printf("Creating window\n");
     window_a = createWindow(w - 108, h - 132, WIN_FIXEDSIZE);
+    printf("win_a = %i\n", window_a);
     
     //Set up their titles
     printf("Setting up title\n");
@@ -368,8 +426,8 @@ unsigned int cmd_window;
 unsigned char cmd_x;
 unsigned char cmd_y;
 unsigned short cmd_bx, cmd_by; 
-int cmd_width;
-int cmd_height;
+unsigned int cmd_width;
+unsigned int cmd_height;
 int cmd_max_chars;
 int cmd_max_lines;
 
@@ -457,9 +515,12 @@ void cmd_clear() {
 
     unsigned int x, y;
 
+    printf("%i\n", cmd_width);
+
     for(y = 0; y < cmd_height; y++)
-        for(x = 0; x < cmd_width; x++)
+        for(x = 0; x < cmd_width; x++) {
             cmd_bmp->data[(y+off_top)*cmd_bmp->width + (x+off_left)] = RGB(255, 255, 255);
+        }
             
     cmd_x = 0;
     cmd_y = 0;
@@ -550,11 +611,13 @@ void cmd_init(unsigned int win) {
     cmd_bmp = getWindowContext(cmd_window);
     cmd_x = 0;
     cmd_y = 0;
+    printf("%i:%i, %i\n", cmd_window, cmd_bmp->width, cmd_bmp->height);
     //getWindowDimensions(win, &cmd_bx, &cmd_by);
     cmd_width = cmd_bmp->width - (off_left + off_right);
     cmd_height = cmd_bmp->height - (off_top + off_bottom);
     cmd_max_chars = (cmd_width/8) - 1;
     cmd_max_lines = (cmd_height/12) - 1;
+    print_list();
     cmd_clear();
 }
 
