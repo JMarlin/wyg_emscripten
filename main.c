@@ -1551,7 +1551,7 @@ void putMouse(int x, int y, unsigned char buttons) {
     
         cur_window = (window*)List_get_at(window_list, i);
 
-        if(!cur_window || cur_window == root_window || cur_window == mouse_window)
+        if(!cur_window || cur_window == root_window || cur_window == mouse_window || !(cur_window->flags & WIN_VISIBLE))
             continue;
 
         if(x >= cur_window->x &&

@@ -52,6 +52,11 @@ void moveWindow(unsigned int handle, unsigned short x, unsigned short y) {
     moveHandle(handle, (unsigned int)x, (unsigned int)y);
 }
 
+void hideWindow(unsigned int handle) {
+
+    markHandleVisible(handle, 0);
+}
+
 void showWindow(unsigned int handle) {
 
     markHandleVisible(handle, 1);

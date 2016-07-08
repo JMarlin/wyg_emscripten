@@ -14,11 +14,25 @@ extern unsigned char font_array[];
 extern int initMouse(void);
 extern int checkMouse(int* x, int* y, unsigned char *buttons);
 extern void putMouse(int x, int y, unsigned char buttons);
-extern void print_list();
 
-void repaintRegion(unsigned int handle, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
+typedef struct window {
+    unsigned char flags;
+    unsigned int handle;
+    unsigned int pid;
+    bitmap* context;
+    struct window* next_sibling;
+    struct window* parent; 
+    struct window* first_child;
+    unsigned int w;
+    unsigned int h;
+    unsigned int x;
+    unsigned int y;
+    unsigned char needs_redraw;
+    unsigned char* title;
+    unsigned char frame_needs_redraw;
+} window;
 
-unsigned char off_top, off_left, off_bottom, off_right;
+int off_top, off_left, off_bottom, off_right;
 
 int main(int argc, char** argv) {
 	
@@ -98,7 +112,7 @@ int parse(char* cmdbuf) {
     return 0;
 }
 
-unsigned int window_a = 0, window_b = 0, main_panel_handle = 0;
+unsigned int window_a = 0, window_b = 0;
 
 int focusCmd() {
     
@@ -107,41 +121,6 @@ int focusCmd() {
 }
 
 unsigned int winx, winy;
-
-extern void bmpDrawHLine(bitmap* bmp, int x, int y, int w, unsigned int c);
-extern void bmpDrawVLine(bitmap* bmp, int x, int y, int h, unsigned int c);
-void winDrawPanel(unsigned int handle, int x, int y, int width, int height, unsigned int color, int border_width, int invert) {
-
-    bitmap* bmp = getWindowContext(handle);
-    unsigned char r = RVAL(color);
-    unsigned char g = GVAL(color);
-    unsigned char b = BVAL(color);
-    unsigned int light_color = RGB(r > 155 ? 255 : r + 100, g > 155 ? 255 : g + 100, b > 155 ? 255 : b + 100);
-    unsigned int shade_color = RGB(r < 100 ? 0 : r - 100, g < 100 ? 0 : g - 100, b < 100 ? 0 : b - 100);
-    unsigned int temp;
-    int i;
-
-    if(invert) {
-
-        temp = shade_color;
-        shade_color = light_color;
-        light_color = temp;
-    }
-
-    for(i = y + border_width; i < height + y - border_width; i++) {
-
-        bmpDrawHLine(bmp, x + border_width, i, width - (border_width * 2), color);
-    }
-
-    for(i = 0; i < border_width; i++) {
-
-        bmpDrawHLine(bmp, x+i, y+i, width-(2*i), light_color);
-        bmpDrawVLine(bmp, x+i, y+i+1, height-((i+1)*2), light_color);
-        bmpDrawHLine(bmp, x+i, (y+height)-(i+1), width-(2*i), shade_color);
-        bmpDrawVLine(bmp, x+width-i-1, y+i+1, height-((i+1)*2), shade_color);
-    }
-
-}
 
 int moveChild() {
     
@@ -168,59 +147,6 @@ int moveMe() {
         moveHandle(window_a, 54, 66);
 
     moved = !moved;
-}
-
-//Called by wyg in the test harness
-void message_client(int handle, int x, int y, unsigned char buttons, unsigned char key, unsigned char evt) {
-
-    static char is_down = 0, shown = 0;
-
-    if(handle == main_panel_handle) {
-
-        if(x <= 95 && x >= 5 &&
-           y <= 95 && y >= 5) {
-
-            if(buttons) {
-
-                if(!is_down) {
-
-                    printf("DOWN\n");
-                    winDrawPanel(main_panel_handle, 5, 5, 90, 90, RGB(238, 203, 137), 1, 1);
-                    repaintRegion(main_panel_handle, 5, 5, 90, 90); 
-
-                    is_down = 1;
-                }
-            } else {
-
-                if(is_down) {
-
-                    printf("UP\n");
-                    winDrawPanel(main_panel_handle, 5, 5, 90, 90, RGB(238, 203, 137), 1, 0);
-                    repaintRegion(main_panel_handle, 5, 5, 90, 90);
-
-                    if(!window_b) {
-
-                        makeChild();
-                        shown = 1;
-                    } else {
-    
-                        if(shown) {
-
-                            hideWindow(window_b);
-                        } else {
-
-                            showWindow(window_b);
-                            focus(window_b);
-                        }
-
-                        shown = !shown;
-                    }
-
-                    is_down = 0;
-                }
-            }
-        }
-    }
 }
 
 int makeChild() {
@@ -259,7 +185,7 @@ int makeChild() {
 //Gotta calculate frame dimensions here
     
     //Paint a pretty picture into window A
-    ctx_b = getWindowContext(window_b);
+    ctx_b = getWindowContext();
     
     //This SHOULD tile the tile image across the window
     for(x = 0; x < 400 - off_left - off_right; x++)
@@ -294,7 +220,7 @@ void input_loop();
 
 unsigned int desktop = 0;
 
-void old_makeWindows() {
+void makeWindows() {
     
     unsigned short w, h;
 
@@ -312,53 +238,31 @@ void old_makeWindows() {
 
     printf("Creating desktop\n");
     
-    desktop = createWindow(w - 2, h - 2, WIN_FIXEDSIZE | WIN_UNDECORATED | WIN_NODRAG);
-
-    print_list();
+    desktop = createWindow(w - 1, h - 1, WIN_FIXEDSIZE | WIN_UNDECORATED | WIN_NODRAG);
 
     printf("Done creating %i, setting title\n", desktop);
-
-    print_list();
-
-    setTitle(desktop, "DESKTOP");
-
-    print_list();
 
     //Paint a pretty picture into window A
     bitmap* desk_bmp = getWindowContext(desktop);
     int x, y; 
 
-    print_list();
-
     //This SHOULD tile the tile image across the window
-    for(x = 0; x < w - 2; x++)
-        for(y = 0; y < h - 2; y++)
-            desk_bmp->data[y*(w-2) + x] = tile_data[(y%4)*4 + (x%4)];
+    for(x = 0; x < w - 1; x++)
+        for(y = 0; y < h - 1; y++)
+            desk_bmp->data[y*w + x] = tile_data[(y%4)*4 + (x%4)];
 
-
-    print_list();
 
     printf("Done with title, installing\n");
 
-    //installWindow(desktop, ROOT_WINDOW);
-
-    print_list();
+    installWindow(desktop, ROOT_WINDOW);
 
     printf("Done installing, moving to top left\n");
 
-    print_list();
-
     moveHandle(desktop, 1, 1);
-
-    print_list();
-
     showWindow(desktop); 
-
-    print_list();
 
     printf("Creating window\n");
     window_a = createWindow(w - 108, h - 132, WIN_FIXEDSIZE);
-    printf("win_a = %i\n", window_a);
     
     //Set up their titles
     printf("Setting up title\n");
@@ -399,36 +303,6 @@ void old_makeWindows() {
             break;
     }
 */
-}
-
-void makeWindows() {
-    
-    unsigned short w, h;
-
-    getFrameDims(&off_top, &off_left, &off_bottom, &off_right);
-        
-    getWindowDimensions(ROOT_WINDOW, &w, &h);
-
-    main_panel_handle = createWindow(100, h - 2, WIN_FIXEDSIZE | WIN_UNDECORATED | WIN_NODRAG);
-    
-    setTitle(main_panel_handle, "MainPanel");
-        
-    moveHandle(main_panel_handle, w - 101, 1);
-
-    winDrawPanel(main_panel_handle, 0, 0, 100, h - 2, RGB(238, 203, 137), 1, 0);
-    winDrawPanel(main_panel_handle, 5, 5, 90, 90, RGB(238, 203, 137), 1, 0);
-    
-    showWindow(main_panel_handle);
-
-    repaintWindow(main_panel_handle);    
-        
-    initKey();
-    initMouse(); //Should be called in WYG, not here
-    
-    //Only for emscripten. Should be configurable via compiler directive
-    //In real production, this would be a message loop waiting for
-    //event messages passed back from WYG
-    emscripten_set_main_loop(input_loop, 0, 1);
 }
 
 unsigned char temp_char = 0;
@@ -511,9 +385,7 @@ void repaintAll(unsigned int handle, bitmap* h_bmp) {
 }
 
 //Wrapper for setting the blit mask for the window bitmap to a specific region before requesting redraw
-void repaintRegion(unsigned int handle, unsigned int x, unsigned int y, unsigned int w, unsigned int h) {
-
-    bitmap* h_bmp = getWindowContext(handle);
+void repaintRegion(unsigned int handle, bitmap* h_bmp, unsigned int x, unsigned int y, unsigned int w, unsigned int h) {
 
     //Set the blitting rect 
     h_bmp->top = y;
@@ -530,8 +402,8 @@ unsigned int cmd_window;
 unsigned char cmd_x;
 unsigned char cmd_y;
 unsigned short cmd_bx, cmd_by; 
-unsigned int cmd_width;
-unsigned int cmd_height;
+int cmd_width;
+int cmd_height;
 int cmd_max_chars;
 int cmd_max_lines;
 
@@ -551,7 +423,7 @@ void drawCharacter(bitmap* b, char c, int x, int y, unsigned int color) {
         }
     }
     
-    repaintRegion(cmd_window, x, y, 8, 12);
+    repaintRegion(cmd_window, cmd_bmp, x, y, 8, 12);
 }
 
 
@@ -619,12 +491,9 @@ void cmd_clear() {
 
     unsigned int x, y;
 
-    printf("%i\n", cmd_width);
-
     for(y = 0; y < cmd_height; y++)
-        for(x = 0; x < cmd_width; x++) {
+        for(x = 0; x < cmd_width; x++)
             cmd_bmp->data[(y+off_top)*cmd_bmp->width + (x+off_left)] = RGB(255, 255, 255);
-        }
             
     cmd_x = 0;
     cmd_y = 0;
@@ -715,13 +584,11 @@ void cmd_init(unsigned int win) {
     cmd_bmp = getWindowContext(cmd_window);
     cmd_x = 0;
     cmd_y = 0;
-    printf("%i:%i, %i\n", cmd_window, cmd_bmp->width, cmd_bmp->height);
     //getWindowDimensions(win, &cmd_bx, &cmd_by);
     cmd_width = cmd_bmp->width - (off_left + off_right);
     cmd_height = cmd_bmp->height - (off_top + off_bottom);
     cmd_max_chars = (cmd_width/8) - 1;
     cmd_max_lines = (cmd_height/12) - 1;
-    print_list();
     cmd_clear();
 }
 
