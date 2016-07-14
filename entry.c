@@ -22,6 +22,8 @@ void repaintAll(unsigned int handle);
 void repaintRegion(unsigned int handle, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
 void drawCharacter(bitmap* b, char c, int x, int y, unsigned int color, int redraw);
 
+unsigned short w, h;
+
 unsigned char off_top, off_left, off_bottom, off_right;
 
 int main(int argc, char** argv) {
@@ -298,18 +300,18 @@ void message_client(int handle, int x, int y, unsigned char buttons, unsigned ch
                         resizeWindowHandle(main_panel_handle, 100, 130);
                         win_button = newButton(main_panel_handle, 30, 100, "Window B");
                         moveButton(win_button, 0, 100);
-                        moveWindow(main_panel_handle, 301, 1);
+                        moveHandle(main_panel_handle, w - 301, 1);
                         showWindow(menu_panel_handle);
                         shown = 1;
                     } else {
     
                         if(shown) {
 
-                            moveWindow(main_panel_handle, 1, 1);
+                            moveHandle(main_panel_handle, w - 101, 1);
                             hideWindow(menu_panel_handle);
                         } else {
 
-                            moveWindow(main_panel_handle, 301, 1);
+                            moveHandle(main_panel_handle, w - 301, 1);
                             showWindow(menu_panel_handle);
                             //focus(window_b);
                         }
@@ -345,8 +347,6 @@ unsigned int desktop = 0;
 
 void makeWindows() {
     
-    unsigned short w, h;
-
     getFrameDims(&off_top, &off_left, &off_bottom, &off_right);
         
     getWindowDimensions(ROOT_WINDOW, &w, &h);
