@@ -692,20 +692,14 @@ window* newWindow(unsigned int width, unsigned int height, unsigned char flags, 
         
     new_window->handle = next_handle++;
 
-    printf("(m1) window_list->count from %i to ", window_list->count);
-
     if(mouse_window)
         List_pop(window_list, (void*)mouse_window);
-
-    printf("%i\n", window_list->count);
 
     //De-activate the old active window
     if(temp_window = (window*)List_get_at(window_list, window_list->count - (mouse_window ? 2 : 1))) {
 
         temp_window->active = 0;
     } 
-	
-    printf("(w) window_list->count from %i to ", window_list->count);
 	
     if(!List_add(window_list, (void*)new_window)){
 		
@@ -716,11 +710,8 @@ window* newWindow(unsigned int width, unsigned int height, unsigned char flags, 
 	if(temp_window)
 	    temp_window->active = 1;
         
-        printf("Couldn't add window to window list");
 	return (window*)0;	
     }
-
-    printf("%i\n", window_list->count);
     
     //Give the new window its initial decoration
     if(!(new_window->flags & WIN_UNDECORATED))
@@ -732,15 +723,11 @@ window* newWindow(unsigned int width, unsigned int height, unsigned char flags, 
     if(temp_window)
  	drawTitlebar(temp_window, 1);
 	
-    printf("(m2) window_list->count from %i to ", window_list->count); 
-    
     if(mouse_window) {
 
         List_add(window_list, mouse_window);
         drawWindow(mouse_window, 0);
     }
-
-    printf("%i\n", window_list->count);
 
     //cmd_printDecimal(new_window->handle);
     //pchar('\n');
@@ -754,7 +741,6 @@ unsigned int newWindowHandle(unsigned int width, unsigned int height, unsigned c
 	if(ret_window)
 	    return ret_window->handle;
 	
-	printf("Window creater returned null pointer");
         return 0;
 }
 
@@ -762,25 +748,17 @@ window* getWindowByHandle(unsigned int handle) {
     
     window* out_window;
     
-    printf("Looking for window in %i\n", window_list->count);
-
     int i; 
     for(i = 0; i < window_list->count; i++) {
 
        out_window = (window*)List_get_at(window_list, i); 
 
-       if(!out_window) printf("Got an empty pointer!");
-
-       printf("    cmp: %i ?= %i\n", handle, out_window->handle);
-
 	if(out_window->handle == handle) {
 
-            printf("Found\n");
 	    return out_window;
         }
     }
     
-    printf("Not found\n");
     return (window*)0;
 }
 
@@ -822,11 +800,9 @@ bitmap* getWindowContext(unsigned int handle) {
     
     if(!dest_window) {
      
-         prints("[WYG] Couldn't find the window to get its context\n");   
         return (bitmap*)0;
     }
         
-    printf("(%i, %i)\n", dest_window->context->width, dest_window->context->height);
     return dest_window->context;
 }
 

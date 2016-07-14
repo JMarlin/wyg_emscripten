@@ -1,6 +1,7 @@
 #include <emscripten.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "../p5-redux/P5OSPPB/mods/include/key.h"
 #include "../p5-redux/P5OSPPB/mods/include/wyg.h"
 #include "../p5-redux/P5OSPPB/mods/include/p5.h"
@@ -16,7 +17,9 @@ extern int checkMouse(int* x, int* y, unsigned char *buttons);
 extern void putMouse(int x, int y, unsigned char buttons);
 extern void print_list();
 
+void repaintAll(unsigned int handle);
 void repaintRegion(unsigned int handle, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
+void drawCharacter(bitmap* b, char c, int x, int y, unsigned int color, int redraw);
 
 unsigned char off_top, off_left, off_bottom, off_right;
 
@@ -170,7 +173,106 @@ int moveMe() {
     moved = !moved;
 }
 
+typedef struct Button_s {
+    unsigned int win_handle;
+    unsigned int x;
+    unsigned int y;
+    unsigned int width;
+    unsigned int height;
+    char* title;
+} Button;
+
+Button* p5_button = (Button*)0;
+
+Button* newButton(unsigned int handle, unsigned int height, unsigned int width, char* title) {
+
+    Button* ret_button = (Button*)malloc(sizeof(Button));
+
+    if(!ret_button)
+        return ret_button;
+
+    ret_button->x = 0;
+    ret_button->y = 0;
+    ret_button->height = height;
+    ret_button->width = width;
+    ret_button->title = title;
+    ret_button->win_handle = handle;
+
+    return ret_button;
+}
+
+void drawButton(Button* button, int pressed);
+
+void moveButton(Button* button, unsigned int x, unsigned int y) {
+
+    //Need to be able to call a parentWindowRepaintBackground()
+    //method here for the old rect the button was previously
+    //occupying
+    //repaintRegion(button->win_handle, button->x, button->y, button->width, button->height);
+
+    button->x = x;
+    button->y = y;
+
+    drawButton(button, 0);
+}
+
+unsigned int stringLength(char* s) {
+
+    char* old_s = s;
+
+    while(*(s++));
+
+    return s - old_s;
+}
+
+void winDrawCharacter(unsigned int handle, char c, int x, int y, unsigned int color, int repaint) {
+
+    bitmap* bmp = getWindowContext(handle);
+
+    drawCharacter(bmp, c, x, y, color, repaint);
+}
+
+void drawButton(Button* button, int pressed) {
+    
+    int orig_len = 0;
+   
+    if(button->title)
+        orig_len = stringLength(button->title);
+
+    //Draw the basic button bevel
+    winDrawPanel(main_panel_handle, button->x, button->y, button->width, button->height, RGB(238, 203, 137), 1, pressed);
+    
+    //Draw the button title centered if it has one
+    if(orig_len) {
+
+        //Limit displayed characters to the available width of the control
+        int max_chars = (button->width / 8) - 3;
+     
+        //Make sure it doesn't become negative, and then clamp len to it
+        max_chars = max_chars < 0 ? 0 : max_chars; 
+        int len = orig_len > max_chars ? max_chars : orig_len;
+
+        //Calculate text location
+        int str_x = (button->x + (button->width / 2)) - ((len + (len == orig_len ? 0 : 3)) * 4);
+        int str_y = (button->y + (button->height / 2)) - 6;
+
+        //Draw base characters up to visibility limit
+        int i;
+        for(i = 0; i < len; i++)
+            winDrawCharacter(main_panel_handle, button->title[i], str_x + (i*8), str_y, RGB(0, 0, 0), 0);
+
+        //Draw ellipsis if the title is too wide
+        if(len < orig_len) 
+            for( ; i < len + 3; i++)
+                winDrawCharacter(main_panel_handle, '.', str_x + (i*8), str_y, RGB(0, 0, 0), 0);
+    }
+
+    repaintRegion(main_panel_handle, 5, 5, 90, 90); 
+}
+
 //Called by wyg in the test harness
+//Would be replaced in production by a
+//message loop
 void message_client(int handle, int x, int y, unsigned char buttons, unsigned char key, unsigned char evt) {
 
     static char is_down = 0, shown = 0;
@@ -184,19 +286,14 @@ void message_client(int handle, int x, int y, unsigned char buttons, unsigned ch
 
                 if(!is_down) {
 
-                    printf("DOWN\n");
-                    winDrawPanel(main_panel_handle, 5, 5, 90, 90, RGB(238, 203, 137), 1, 1);
-                    repaintRegion(main_panel_handle, 5, 5, 90, 90); 
-
+                    drawButton(p5_button, 1);
                     is_down = 1;
                 }
             } else {
 
                 if(is_down) {
 
-                    printf("UP\n");
-                    winDrawPanel(main_panel_handle, 5, 5, 90, 90, RGB(238, 203, 137), 1, 0);
-                    repaintRegion(main_panel_handle, 5, 5, 90, 90);
+                    drawButton(p5_button, 0);
 
                     if(!window_b) {
 
@@ -416,11 +513,12 @@ void makeWindows() {
     moveHandle(main_panel_handle, w - 101, 1);
 
     winDrawPanel(main_panel_handle, 0, 0, 100, h - 2, RGB(238, 203, 137), 1, 0);
-    winDrawPanel(main_panel_handle, 5, 5, 90, 90, RGB(238, 203, 137), 1, 0);
+    p5_button = newButton(main_panel_handle, 90, 90, "P5");
+    moveButton(p5_button, 5, 5);
     
     showWindow(main_panel_handle);
 
-    repaintWindow(main_panel_handle);    
+    repaintAll(main_panel_handle);    
         
     initKey();
     initMouse(); //Should be called in WYG, not here
@@ -498,8 +596,10 @@ int usrExit(void) {
 }
 
 //Wrapper for setting the blit mask for the window bitmap to a specific region before requesting redraw
-void repaintAll(unsigned int handle, bitmap* h_bmp) {
+void repaintAll(unsigned int handle) {
     
+    bitmap* h_bmp = getWindowContext(handle);
+
     //Set the blitting rect 
     h_bmp->top = 0;
     h_bmp->left = 0;
@@ -535,7 +635,7 @@ unsigned int cmd_height;
 int cmd_max_chars;
 int cmd_max_lines;
 
-void drawCharacter(bitmap* b, char c, int x, int y, unsigned int color) {
+void drawCharacter(bitmap* b, char c, int x, int y, unsigned int color, int redraw) {
    
     int j, i;
     unsigned char line;
@@ -551,25 +651,26 @@ void drawCharacter(bitmap* b, char c, int x, int y, unsigned int color) {
         }
     }
     
-    repaintRegion(cmd_window, x, y, 8, 12);
+    if(redraw)
+        repaintRegion(cmd_window, x, y, 8, 12);
 }
 
 
-void drawCharacterBold(bitmap* b, char c, int x, int y, unsigned int color) {
+void drawCharacterBold(bitmap* b, char c, int x, int y, unsigned int color, int redraw) {
 
-    drawCharacter(b, c, x, y, color);
-    drawCharacter(b, c, x+1, y, color);
-    drawCharacter(b, c, x, y+1, color);
-    drawCharacter(b, c, x+1, y+1, color);
+    drawCharacter(b, c, x, y, color, redraw);
+    drawCharacter(b, c, x+1, y, color, redraw);
+    drawCharacter(b, c, x, y+1, color, redraw);
+    drawCharacter(b, c, x+1, y+1, color, redraw);
 }
 
 
-void drawString(bitmap* b, char* str, int x, int y, unsigned int color) {
+void drawString(bitmap* b, char* str, int x, int y, unsigned int color, int redraw) {
 
     int i;
 
     for(i = 0; str[i]; i++) 
-        drawCharacter(b, str[i], x+(i*8), y, color);
+        drawCharacter(b, str[i], x+(i*8), y, color, redraw);
 }
 
 void cmd_getCursor(unsigned char *x, unsigned char *y) {
@@ -592,8 +693,8 @@ void cmd_pchar(unsigned char c) {
         cmd_y++;
     } else {
         
-        putchar(c);
-        drawCharacter(cmd_bmp, c, (cmd_x*8) + off_left, (cmd_y*12) + off_top, RGB(0, 0, 0));
+//        putchar(c);
+        drawCharacter(cmd_bmp, c, (cmd_x*8) + off_left, (cmd_y*12) + off_top, RGB(0, 0, 0), 1);
         cmd_x++;
 
         if(cmd_x > cmd_max_chars) {
@@ -629,7 +730,7 @@ void cmd_clear() {
     cmd_x = 0;
     cmd_y = 0;
     
-    repaintAll(cmd_window, cmd_bmp);
+    repaintAll(cmd_window);
     
     //Now clear to green temporarily to see what's getting repainted and where
     for(y = 0; y < cmd_height; y++)
