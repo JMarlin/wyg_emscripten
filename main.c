@@ -762,6 +762,40 @@ window* getWindowByHandle(unsigned int handle) {
     return (window*)0;
 }
 
+void resizeWindow(window* win, int width, int height) {
+
+    bitmap* new_context = newBitmap(width, height);
+
+    if(!new_context)
+        return;
+
+    int copy_w = width < win->w ? width : win->w;
+    int copy_h = height < win->h ? height : win->h;
+
+    win->w = width;
+    win->h = height;
+
+    int x, y;
+    for(y = 0; y < copy_h; y++)
+        for(x = 0; x < copy_w; x++)            
+            new_context->data[y*new_context->width + x] = win->context->data[y*win->context->width + x];
+    
+    free(win->context);
+    win->context = new_context;
+
+    drawWindow(win, 0);
+}
+
+void resizeWindowHandle(unsigned int handle, int width, int height) {
+
+    window* win = getWindowByHandle(handle);
+
+    if(!win)
+        return;
+
+    resizeWindow(win, width, height);
+}
+
 void showModes(void) {
 
 

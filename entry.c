@@ -15,6 +15,7 @@ extern unsigned char font_array[];
 extern int initMouse(void);
 extern int checkMouse(int* x, int* y, unsigned char *buttons);
 extern void putMouse(int x, int y, unsigned char buttons);
+extern void resizeWindowHandle(unsigned int handle, int w, int h);
 extern void print_list();
 
 void repaintAll(unsigned int handle);
@@ -183,6 +184,7 @@ typedef struct Button_s {
 } Button;
 
 Button* p5_button = (Button*)0;
+Button* win_button = (Button*)0;
 
 Button* newButton(unsigned int handle, unsigned int height, unsigned int width, char* title) {
 
@@ -267,7 +269,7 @@ void drawButton(Button* button, int pressed) {
                 winDrawCharacter(main_panel_handle, '.', str_x + (i*8), str_y, RGB(0, 0, 0), 0);
     }
 
-    repaintRegion(main_panel_handle, 5, 5, 90, 90); 
+    repaintRegion(main_panel_handle, button->x, button->y, button->width, button->height); 
 }
 
 //Called by wyg in the test harness
@@ -298,6 +300,9 @@ void message_client(int handle, int x, int y, unsigned char buttons, unsigned ch
                     if(!window_b) {
 
                         makeChild();
+                        resizeWindowHandle(main_panel_handle, 100, 130);
+                        win_button = newButton(main_panel_handle, 30, 100, "Window B");
+                        moveButton(win_button, 0, 100);
                         shown = 1;
                     } else {
     
@@ -506,15 +511,15 @@ void makeWindows() {
         
     getWindowDimensions(ROOT_WINDOW, &w, &h);
 
-    main_panel_handle = createWindow(100, h - 2, WIN_FIXEDSIZE | WIN_UNDECORATED | WIN_NODRAG);
+    main_panel_handle = createWindow(100, 100, WIN_FIXEDSIZE | WIN_UNDECORATED | WIN_NODRAG);
     
     setTitle(main_panel_handle, "MainPanel");
         
     moveHandle(main_panel_handle, w - 101, 1);
 
-    winDrawPanel(main_panel_handle, 0, 0, 100, h - 2, RGB(238, 203, 137), 1, 0);
-    p5_button = newButton(main_panel_handle, 90, 90, "P5");
-    moveButton(p5_button, 5, 5);
+    winDrawPanel(main_panel_handle, 0, 0, 100, 100, RGB(238, 203, 137), 1, 0);
+    p5_button = newButton(main_panel_handle, 100, 100, "P5");
+    moveButton(p5_button, 0, 0);
     
     showWindow(main_panel_handle);
 
