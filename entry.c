@@ -62,8 +62,6 @@ char* cmdWord[CMD_COUNT] = {
     "CLR",
     "VER",
     "EXIT",
-    "WIN",
-    "CLOSE",
     "FOCUS",
     "MOV",
     "MOVME"
@@ -73,8 +71,6 @@ sys_command cmdFunc[CMD_COUNT] = {
     (sys_command)&usrClear,
     (sys_command)&consVer,
     (sys_command)&usrExit,
-    (sys_command)&makeChild,
-    (sys_command)&closeChild,
     (sys_command)&focusCmd,
     (sys_command)&moveChild,
     (sys_command)&moveMe
@@ -102,7 +98,7 @@ int parse(char* cmdbuf) {
     return 0;
 }
 
-unsigned int window_a = 0, window_b = 0, main_panel_handle = 0;
+unsigned int window_a = 0, window_b = 0, main_panel_handle = 0, menu_panel_handle = 0;
 
 int focusCmd() {
     
@@ -281,8 +277,8 @@ void message_client(int handle, int x, int y, unsigned char buttons, unsigned ch
 
     if(handle == main_panel_handle) {
 
-        if(x <= 95 && x >= 5 &&
-           y <= 95 && y >= 5) {
+        if(x >= p5_button->x && x <= (p5_button->x + p5_button->width) &&
+           y >= p5_button->y && y <= (p5_button->y + p5_button->height)) {
 
             if(buttons) {
 
@@ -297,22 +293,25 @@ void message_client(int handle, int x, int y, unsigned char buttons, unsigned ch
 
                     drawButton(p5_button, 0);
 
-                    if(!window_b) {
+                    if(!win_button) {
 
-                        makeChild();
                         resizeWindowHandle(main_panel_handle, 100, 130);
                         win_button = newButton(main_panel_handle, 30, 100, "Window B");
                         moveButton(win_button, 0, 100);
+                        moveWindow(main_panel_handle, 301, 1);
+                        showWindow(menu_panel_handle);
                         shown = 1;
                     } else {
     
                         if(shown) {
 
-                            hideWindow(window_b);
+                            moveWindow(main_panel_handle, 1, 1);
+                            hideWindow(menu_panel_handle);
                         } else {
 
-                            showWindow(window_b);
-                            focus(window_b);
+                            moveWindow(main_panel_handle, 301, 1);
+                            showWindow(menu_panel_handle);
+                            //focus(window_b);
                         }
 
                         shown = !shown;
@@ -323,58 +322,6 @@ void message_client(int handle, int x, int y, unsigned char buttons, unsigned ch
             }
         }
     }
-}
-
-int makeChild() {
-    
-    bitmap* ctx_b;
-    int x, y;
-    unsigned int tile_width = 4;
-    unsigned int tile_height = 4;
-    unsigned int tile_data[] = {
-        0x00000000, 0x00000000, 0x00000000, 0xFFFFFFFF,
-        0x00000000, 0xFFFFFFFF, 0x00000000, 0x00000000,
-        0x00000000, 0x00000000, 0xFFFFFFFF, 0x00000000,
-        0xFFFFFFFF, 0x00000000, 0x00000000, 0x00000000
-    };
-    
-    winx = 100;
-    winy = 20;
-    
-    if(window_b) {
-        
-        cmd_prints("Raising window\n");
-        focus(window_b);
-        return 0;
-    }    
-    
-    cmd_prints("Creating window\n");
-    
-    window_b = createWindow(400, 400, WIN_FIXEDSIZE);
-    
-    //Set up their titles
-    setTitle(window_b, "Window B");
-    
-    //Install them into the root window
-    installWindow(window_b, ROOT_WINDOW);
-
-//Gotta calculate frame dimensions here
-    
-    //Paint a pretty picture into window A
-    ctx_b = getWindowContext(window_b);
-    
-    //This SHOULD tile the tile image across the window
-    for(x = 0; x < 400 - off_left - off_right; x++)
-        for(y = 0; y < 400 - off_top - off_bottom; y++)
-            ctx_b->data[(y+off_top)*(400) + (x+off_left)] = tile_data[(y%tile_height)*tile_width + (x%tile_width)];
-    
-    //Make them prettily cascade
-    moveHandle(window_b, 100, 20);
-    
-    //Make them visible
-    showWindow(window_b);
-    
-    return 0;
 }
 
 int closeChild() {
@@ -396,113 +343,6 @@ void input_loop();
 
 unsigned int desktop = 0;
 
-void old_makeWindows() {
-    
-    unsigned short w, h;
-
-    unsigned int tile_data[] = {
-        0x00000000, 0x00000000, 0x00000000, 0xFFFFFFFF,
-        0x00000000, 0xFFFFFFFF, 0x00000000, 0x00000000,
-        0x00000000, 0x00000000, 0xFFFFFFFF, 0x00000000,
-        0xFFFFFFFF, 0x00000000, 0x00000000, 0x00000000
-    };
-
-    getFrameDims(&off_top, &off_left, &off_bottom, &off_right);
-        
-    //Make two windows
-    getWindowDimensions(ROOT_WINDOW, &w, &h);
-
-    printf("Creating desktop\n");
-    
-    desktop = createWindow(w - 2, h - 2, WIN_FIXEDSIZE | WIN_UNDECORATED | WIN_NODRAG);
-
-    print_list();
-
-    printf("Done creating %i, setting title\n", desktop);
-
-    print_list();
-
-    setTitle(desktop, "DESKTOP");
-
-    print_list();
-
-    //Paint a pretty picture into window A
-    bitmap* desk_bmp = getWindowContext(desktop);
-    int x, y; 
-
-    print_list();
-
-    //This SHOULD tile the tile image across the window
-    for(x = 0; x < w - 2; x++)
-        for(y = 0; y < h - 2; y++)
-            desk_bmp->data[y*(w-2) + x] = tile_data[(y%4)*4 + (x%4)];
-
-
-    print_list();
-
-    printf("Done with title, installing\n");
-
-    //installWindow(desktop, ROOT_WINDOW);
-
-    print_list();
-
-    printf("Done installing, moving to top left\n");
-
-    print_list();
-
-    moveHandle(desktop, 1, 1);
-
-    print_list();
-
-    showWindow(desktop); 
-
-    print_list();
-
-    printf("Creating window\n");
-    window_a = createWindow(w - 108, h - 132, WIN_FIXEDSIZE);
-    printf("win_a = %i\n", window_a);
-    
-    //Set up their titles
-    printf("Setting up title\n");
-    setTitle(window_a, "PTerm");
-    
-    //Install them into the root window
-    printf("Placing window into desktop\n");
-    installWindow(window_a, ROOT_WINDOW);
-        
-    //Make them prettily cascade
-    printf("Cascading window\n");
-    moveHandle(window_a, 54, 66);
-    
-    //Make them visible
-    printf("Showing window\n");
-    showWindow(window_a);
-        
-    //Set up the console commands
-    printf("Setting up console\n");
-    cmd_init(window_a);
-
-    initKey();
-    initMouse();
-    cmd_prints("::");
-    
-    //Only for emscripten. Should be configurable via compiler directive
-    emscripten_set_main_loop(input_loop, 0, 1);
-
-/*
-    while(1) {
-
-        cmd_prints("::");
-        prints("::");
-        cmd_scans(50, inbuf);
-        
-        //If the command function returns 1 it signals that we need to exit
-        if(parse(inbuf))
-            break;
-    }
-*/
-}
-
 void makeWindows() {
     
     unsigned short w, h;
@@ -512,15 +352,21 @@ void makeWindows() {
     getWindowDimensions(ROOT_WINDOW, &w, &h);
 
     main_panel_handle = createWindow(100, 100, WIN_FIXEDSIZE | WIN_UNDECORATED | WIN_NODRAG);
+
+    menu_panel_handle = createWindow(200, h - 2, WIN_FIXEDSIZE | WIN_UNDECORATED | WIN_NODRAG);
     
     setTitle(main_panel_handle, "MainPanel");
         
+    moveHandle(menu_panel_handle, w - 201, 1);
     moveHandle(main_panel_handle, w - 101, 1);
 
+    winDrawPanel(menu_panel_handle, 0, 0, 200, h - 2, RGB(238, 203, 137), 1, 0);
     winDrawPanel(main_panel_handle, 0, 0, 100, 100, RGB(238, 203, 137), 1, 0);
+
     p5_button = newButton(main_panel_handle, 100, 100, "P5");
     moveButton(p5_button, 0, 0);
     
+    hideWindow(menu_panel_handle);
     showWindow(main_panel_handle);
 
     repaintAll(main_panel_handle);    
