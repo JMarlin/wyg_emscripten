@@ -1541,6 +1541,7 @@ void exceptionHandler(void) {
 
 unsigned char mouse_down = 0;
 window* drag_window = (window*)0;
+window* last_mouse_window = (window*)0;
 int drag_x, drag_y;
 
 //Normally called by mouse_move in turn from the message loop,
@@ -1552,6 +1553,7 @@ extern void message_client(int window, int mouse_x, int mouse_y, unsigned char b
 void putMouse(int x, int y, unsigned char buttons) {
 
     int i;
+    static unsigned char old_buttons = 0;
     window* cur_window;
     window* over_window = (window*)0;
 
@@ -1581,6 +1583,7 @@ void putMouse(int x, int y, unsigned char buttons) {
             mouse_down = 1;
             if(over_window && y < over_window->y + FRAME_SIZE_TOP && !(over_window->flags & WIN_NODRAG)) {
 
+                printf("%x\n", over_window->flags);
                 drag_window = over_window;
                 drag_x = x - over_window->x;
                 drag_y = y - over_window->y;
@@ -1592,19 +1595,32 @@ void putMouse(int x, int y, unsigned char buttons) {
         drag_window = (window*)0;
     }
 
-    if(!drag_window && over_window) {
+    if((!drag_window && over_window) || (over_window != last_mouse_window)) {
+
+        int evt, handle, msg_x, msg_y, msg_btn;
+
+        if(last_mouse_window && (over_window != last_mouse_window)) {
+
+            message_client(last_mouse_window->handle, 0, 0, 0, ' ', 2);
+        }
+
+        if(!drag_window && over_window) {
 
 #ifdef HARNESS_TEST
-        message_client(over_window->handle, x - over_window->x, y - over_window->y, buttons, ' ', 1);
+            message_client(over_window->handle, x - over_window->x, y - over_window->y, ((buttons && !old_buttons) ? 1 : 0) | ((!buttons && old_buttons) ? 2 : 0), ' ', 1);
 #else
-        postMessage(over_window->pid, 0, 0); //Need to specify a protocol for this
+            postMessage(over_window->pid, 0, 0); //Need to specify a protocol for this
 #endif //HARNESS_TEST
+        }
     }
 
     if(mouse_down && drag_window) {
    
          changeWindowPosition(drag_window, x - drag_x, y - drag_y);
     }
+
+    last_mouse_window = over_window;
+    old_buttons = buttons;
 }
 
 //Should be called by the message loop when in situ

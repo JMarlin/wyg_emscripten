@@ -275,21 +275,23 @@ void drawButton(Button* button, int pressed) {
 //message loop
 void message_client(int handle, int x, int y, unsigned char buttons, unsigned char key, unsigned char evt) {
 
-    static char is_down = 0, shown = 0;
+    static char is_down = 0, shown = 0, in_button = 0;
 
     if(handle == main_panel_handle) {
+
+        if(evt == 1) {
 
         if(x >= p5_button->x && x <= (p5_button->x + p5_button->width) &&
            y >= p5_button->y && y <= (p5_button->y + p5_button->height)) {
 
-            if(buttons) {
+            if(buttons & 1) {
 
-                if(!is_down) {
+                if((!is_down) && in_button) {
 
                     drawButton(p5_button, 1);
                     is_down = 1;
                 }
-            } else {
+            } else if(buttons & 2) {
 
                 if(is_down) {
 
@@ -321,6 +323,28 @@ void message_client(int handle, int x, int y, unsigned char buttons, unsigned ch
 
                     is_down = 0;
                 }
+            }
+ 
+            in_button = 1;
+
+        } else {
+
+            in_button = 0;
+ 
+            if(is_down) {
+
+                is_down = !is_down;
+                drawButton(p5_button, 0);
+            }
+        }
+        } else if(evt = 2) {
+
+           in_button = 0;
+       
+           if(is_down) {
+ 
+                is_down = !is_down;
+                drawButton(p5_button, 0);
             }
         }
     }
