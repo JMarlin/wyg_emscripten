@@ -222,7 +222,7 @@ unsigned int stringLength(char* s) {
 
     while(*(s++));
 
-    return s - old_s;
+    return s - old_s - 1;
 }
 
 void winDrawCharacter(unsigned int handle, char c, int x, int y, unsigned int color, int repaint) {
@@ -236,7 +236,7 @@ void drawButton(Button* button, int pressed) {
     
     int orig_len = 0;
    
-    if(button->title)
+    if(button->title) 
         orig_len = stringLength(button->title);
 
     //Draw the basic button bevel

@@ -660,8 +660,6 @@ window* newWindow(unsigned int width, unsigned int height, unsigned char flags, 
     window *new_window, *temp_window;
     unsigned int i, bufsz;
     
-    printf("n:%x\n", flags);
-	
     if(!(new_window = (window*)malloc(sizeof(window)))) {
         
         printf("Coudln't allocate a new window structure");
@@ -1585,7 +1583,6 @@ void putMouse(int x, int y, unsigned char buttons) {
             mouse_down = 1;
             if(over_window && y < over_window->y + FRAME_SIZE_TOP && !(over_window->flags & WIN_NODRAG)) {
 
-                printf("%x\n", over_window->flags);
                 drag_window = over_window;
                 drag_x = x - over_window->x;
                 drag_y = y - over_window->y;
