@@ -656,10 +656,12 @@ void drawOccluded(window* win, Rect* baserect, List* splitrect_list) {
 
 window* newWindow(unsigned int width, unsigned int height, unsigned char flags, unsigned int pid) {
     
-	static int next_handle = 1; 
+    static int next_handle = 1; 
     window *new_window, *temp_window;
     unsigned int i, bufsz;
-    	
+    
+    printf("n:%x\n", flags);
+	
     if(!(new_window = (window*)malloc(sizeof(window)))) {
         
         printf("Coudln't allocate a new window structure");
@@ -1350,7 +1352,7 @@ void raiseWindow(window* dest_window) {
     //raised, otherwise we just redraw (would be more efficient in
     //the future to just redraw those portions that were occluded
     //prior to raising)
-    if(!(dest_window->flags &= WIN_VISIBLE))
+    if(!(dest_window->flags & WIN_VISIBLE))
         markWindowVisible(dest_window, 1);
     else
         drawWindow(dest_window, 0);

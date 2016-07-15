@@ -302,8 +302,8 @@ void message_client(int handle, int x, int y, unsigned char buttons, unsigned ch
                         resizeWindowHandle(main_panel_handle, 100, 130);
                         win_button = newButton(main_panel_handle, 30, 100, "Window B");
                         moveButton(win_button, 0, 100);
-                        moveHandle(main_panel_handle, w - 301, 1);
                         showWindow(menu_panel_handle);
+                        moveHandle(main_panel_handle, w - 301, 1);
                         shown = 1;
                     } else {
     
